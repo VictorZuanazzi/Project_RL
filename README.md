@@ -3,7 +3,13 @@
 This is a group project for the Reinforcemnt learning course offered in M.Sc Artifical Intelligence 
 at the University of Amsterdam.
 
-This work was is in collaboration with [Masoumeh Bakhtiariziabari](https://github.com/mbakhtiariz), [Dhruba Pujary](https://github.com/druv022) and Thomas A. Unger.
+### Contributors
+* [Masoumeh Bakhtiariziabari](https://github.com/mbakhtiariz)
+* [Tarun Krishna](https://github.com/KrishnaTarun)
+* [Dhruba Pujary](https://github.com/druv022)
+* Thomas A. Unger
+
+
 
 ## Problem Statement
 
