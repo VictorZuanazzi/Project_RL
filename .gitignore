@@ -7,3 +7,7 @@ __pycache__/model.cpython-36.pyc
 __pycache__/replay.cpython-36.pyc
 __pycache__/replay.cpython-36.pyc
 __pycache__/environment.cpython-37.pyc
+
+images/
+
+code/__pycache__/
