@@ -1,7 +1,7 @@
 import numpy as np
 from environment import get_env
 from model import *
-from replay import * 
+from replay import *
 import argparse
 import torch
 from torch import optim
@@ -11,40 +11,44 @@ from tqdm import tqdm as _tqdm
 from torch.autograd import Variable
 import random, os
 
-#-------setup seed-----------
+# -------setup seed-----------
 seed_value = 5
 random.seed(seed_value)
 torch.manual_seed(seed_value)
 np.random.seed(seed_value)
-#----------------------------
+# ----------------------------
 
-#----device-----------
-device = device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# ----device-----------
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
-def tqdm(*args, **kwargs):
-    return _tqdm(*args, **kwargs, mininterval=1)    
 
-#using exponential decay rather than linear decay
+
+def tqdm(*args, **kwargs):
+    return _tqdm(*args, **kwargs, mininterval=1)
+
+
+# using exponential decay rather than linear decay
 # def get_epsilon(it):
 #     # YOUR CODE HERE
 #     return max(0.01,(-0.95/ARGS.decay_steps)*it + 1)
 
 def get_beta(it, total_it, beta0):
-    return beta0 + (it/total_it) * (1 - beta0)
+    return beta0 + (it / total_it) * (1 - beta0)
+
 
 def select_action(model, state, epsilon):
-
     state = torch.from_numpy(state).float()
     with torch.no_grad():
         actions = model(state.to(device))
-        
-    rand_num = np.random.uniform(0,1,1)
+
+    rand_num = np.random.uniform(0, 1, 1)
     if epsilon > rand_num:
-        index = torch.randint(0,len(actions),(1,1))
+        index = torch.randint(0, len(actions), (1, 1))
     else:
         value, index = actions.max(0)
 
     return int(index.item())
+
 
 def soft_update(local_model, target_model, tau):
     """Soft update model parameters.
@@ -56,34 +60,35 @@ def soft_update(local_model, target_model, tau):
         tau (float): interpolation parameter 
     """
     for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
-        target_param.data.copy_(tau*local_param.data + (1.0-tau)*target_param.data)
+        target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
 
 
 def compute_q_val(model, state, action):
-    
     # YOUR CODE HERE
     actions = model(state)
     return actions.gather(1, action.unsqueeze(1))
+
 
 def compute_target(model_target, reward, next_state, done, discount_factor):
     # done is a boolean (vector) that indicates if next_state is terminal (episode is done)
     # YOUR CODE HERE
     non_terminal_states_mask = torch.tensor([1 if not s else 0 for s in done])
     right_index = non_terminal_states_mask.nonzero().squeeze(1) if len(non_terminal_states_mask.nonzero().size()) > 1 \
-                                else non_terminal_states_mask.nonzero().squeeze(0)
+        else non_terminal_states_mask.nonzero().squeeze(0)
     non_terminal_states = next_state[right_index]
-    
+
     next_state_values = torch.zeros(done.size()[0]).to(device)
     if not non_terminal_states.nelement() == 0:
-        next_state_values[right_index],_ = model_target(non_terminal_states).max(1)
-    
-    target = reward + discount_factor*next_state_values
-    
+        next_state_values[right_index], _ = model_target(non_terminal_states).max(1)
+
+    target = reward + discount_factor * next_state_values
+
     return target.detach().unsqueeze(1)
+
 
 def train(model, model_target, memory, optimizer, batch_size, discount_factor, TAU, iter, beta=None):
     # DO NOT MODIFY THIS FUNCTION
-    
+
     # don't learn without some decent experience
     if len(memory) < batch_size:
         return None
@@ -96,27 +101,27 @@ def train(model, model_target, memory, optimizer, batch_size, discount_factor, T
 
     if type(transitions[0]) == int:
         return None
-    #print(batch_idx)
+    # print(batch_idx)
     # transition is a list of 5-tuples, instead we want 5 vectors (as torch.Tensor's)
     state, action, reward, next_state, done = zip(*transitions)
-    
+
     # convert to PyTorch and define types
     state = torch.tensor(state, dtype=torch.float).to(device)
     action = torch.tensor(action, dtype=torch.int64).to(device)  # Need 64 bit to use them as index
     next_state = torch.tensor(next_state, dtype=torch.float).to(device)
     reward = torch.tensor(reward, dtype=torch.float).to(device)
     done = torch.tensor(done, dtype=torch.uint8).to(device)  # Boolean
-    
+
     # compute the q value
     q_val = compute_q_val(model, state, action)
-    
+
     with torch.no_grad():  # Don't compute gradient info for the target (semi-gradient)
         target = compute_target(model_target, reward, next_state, done, discount_factor)
 
     if ARGS.replay == 'PER':
-        w = (1/(batch_size * np.array(priorities)) ** beta)
+        w = (1 / (batch_size * np.array(priorities)) ** beta)
         w = torch.tensor(w, dtype=torch.float, requires_grad=False).to(device)
-        
+
         if ARGS.norm:
             w = w / torch.max(w)
 
@@ -137,69 +142,80 @@ def train(model, model_target, memory, optimizer, batch_size, discount_factor, T
 
     if ARGS.update_freq % iter == 0:
         soft_update(model, model_target, TAU)
-    
+
     return loss.item()
 
+
 def smooth(x, N=10):
-    cumsum = np.cumsum(np.insert(x, 0, 0)) 
+    cumsum = np.cumsum(np.insert(x, 0, 0))
     return (cumsum[N:] - cumsum[:-N]) / float(N)
 
-def main():
 
-    #update this disctionary as per the implementation of methods
-    memory= {'NaiveReplayMemory':NaiveReplayMemory,
-             'CombinedReplayMemory' :CombinedReplayMemory,
-             'PER':PrioritizedReplayMemory}
+def main():
+    # update this disctionary as per the implementation of methods
+    memory = {'NaiveReplayMemory': NaiveReplayMemory,
+              'CombinedReplayMemory': CombinedReplayMemory,
+              'PER': PrioritizedReplayMemory,
+              'MinMax': MinMaxNaiveReplayMemory}
 
     # environment
     env, (input_size, output_size) = get_env(ARGS.env)
     # env.seed(seed_value)
 
-    network = { 'CartPole-v1':CartNetwork(input_size, output_size, ARGS.num_hidden).to(device),
-                'MountainCar-v0':MountainNetwork(input_size, output_size, ARGS.num_hidden).to(device),
-                'LunarLander-v2':LanderNetwork(input_size, output_size, ARGS.num_hidden).to(device)}
+    network = {'CartPole-v1': CartNetwork(input_size, output_size, ARGS.num_hidden).to(device),
+               'MountainCar-v0': MountainNetwork(input_size, output_size, ARGS.num_hidden).to(device),
+               'LunarLander-v2': LanderNetwork(input_size, output_size, ARGS.num_hidden).to(device)}
 
     # create new file to store durations
     i = 0
-    fd_name = "results/" +str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(ARGS.pmethod) +'_' + ARGS.env + "_durations0.txt"
+    fd_name = "results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        ARGS.pmethod) + '_' + ARGS.env + "_durations0.txt"
     exists = os.path.isfile(fd_name)
     while exists:
         i += 1
-        fd_name = "results/" +str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(ARGS.pmethod) +'_' + ARGS.env + "_durations%d.txt" % i
+        fd_name = "results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+            ARGS.pmethod) + '_' + ARGS.env + "_durations%d.txt" % i
         exists = os.path.isfile(fd_name)
     fd = open(fd_name, "w+")
 
     # create new file to store rewards
     i = 0
-    fr_name = "results/" +str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(ARGS.pmethod) +'_' + ARGS.env + "_rewards0.txt"
+    fr_name = "results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        ARGS.pmethod) + '_' + ARGS.env + "_rewards0.txt"
     exists = os.path.isfile(fr_name)
     while exists:
         i += 1
-        fr_name = "results/" +str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(ARGS.pmethod) + '_' + ARGS.env +  "_rewards%d.txt" % i
+        fr_name = "results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+            ARGS.pmethod) + '_' + ARGS.env + "_rewards%d.txt" % i
         exists = os.path.isfile(fr_name)
     fr = open(fr_name, "w+")
 
     # Save experiment hyperparams
     i = 0
-    exists = os.path.isfile("results/" +str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(ARGS.pmethod) + '_' + ARGS.env + "_info0.txt")
+    exists = os.path.isfile("results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        ARGS.pmethod) + '_' + ARGS.env + "_info0.txt")
     while exists:
         i += 1
-        exists = os.path.isfile("results/" +str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(ARGS.pmethod) + '_' + ARGS.env + "_info%d.txt" % i)
-    fi = open("results/" + str(ARGS.buffer) + "_" +  str(ARGS.replay) + "_" + str(ARGS.pmethod) + '_' + ARGS.env + "_info%d.txt" % i, "w+")
+        exists = os.path.isfile("results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+            ARGS.pmethod) + '_' + ARGS.env + "_info%d.txt" % i)
+    fi = open("results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        ARGS.pmethod) + '_' + ARGS.env + "_info%d.txt" % i, "w+")
     file_counter = i
     fi.write(str(ARGS))
     fi.close()
 
-    #-----------initialization---------------
+    # -----------initialization---------------
     if ARGS.replay == 'PER':
         replay = memory[ARGS.replay](ARGS.buffer, ARGS.pmethod)
-        filename = "results/" + str(ARGS.buffer) + "_" + 'weights_'+ str(ARGS.replay)+'_'+ARGS.pmethod+'_'+ ARGS.env  + "_%d.pt" % file_counter# +'_.pt'
+        filename = "results/" + str(ARGS.buffer) + "_" + 'weights_' + str(
+            ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + "_%d.pt" % file_counter  # +'_.pt'
     else:
         replay = memory[ARGS.replay](ARGS.buffer)
-        filename = "results/" + str(ARGS.buffer) + "_" + 'weights_' + str(ARGS.replay)+'_'+ ARGS.env  + "_%d.pt" % file_counter#+'_.pt'
+        filename = "results/" + str(ARGS.buffer) + "_" + 'weights_' + str(
+            ARGS.replay) + '_' + ARGS.env + "_%d.pt" % file_counter  # +'_.pt'
 
-    model =  network[ARGS.env] # local network
-    model_target = network[ARGS.env] # target_network
+    model = network[ARGS.env]  # local network
+    model_target = network[ARGS.env]  # target_network
 
     optimizer = optim.Adam(model.parameters(), ARGS.lr)
 
@@ -207,18 +223,25 @@ def main():
     episode_durations = []  #
     rewards_per_episode = []
 
-    scores_window = deque(maxlen=100) 
+    scores_window = deque(maxlen=100)
     eps = ARGS.EPS
-    #-------------------------------------------------------
+    # -------------------------------------------------------
 
-    for i_episode in tqdm(range(ARGS.num_episodes)):
+    for i_episode in tqdm(range(ARGS.num_episodes), ncols=100):
         # YOUR CODE HERE
         # Sample a transition
         s = env.reset()
         done = False
         epi_duration = 0
         r_sum = 0
-        for t in range(1000):
+
+        render_env_bool = False
+        if (ARGS.render_env > 0) and not (i_episode % ARGS.render_env):
+            render_env_bool = True
+            env.render()
+
+        max_steps = 1000
+        for t in range(max_steps):
             # eps = get_epsilon(global_steps) # Comment this to to not use linear decay
 
             model.eval()
@@ -238,12 +261,13 @@ def main():
                     q_val = compute_q_val(model, state, action)
                     target = compute_target(model_target, reward, next_state, done_, ARGS.discount_factor)
                 td_error = F.smooth_l1_loss(q_val, target)
-                replay.push(td_error,(s, a, r, s_next, done))
+                replay.push(td_error, (s, a, r, s_next, done))
                 beta = get_beta(i_episode, ARGS.num_episodes, ARGS.beta0)
             else:
                 replay.push((s, a, r, s_next, done))
-            
-            loss = train(model, model_target, replay, optimizer, ARGS.batch_size, ARGS.discount_factor, ARGS.TAU, global_steps, beta=beta)
+
+            loss = train(model, model_target, replay, optimizer, ARGS.batch_size, ARGS.discount_factor, ARGS.TAU,
+                         global_steps, beta=beta)
 
             s = s_next
             epi_duration += 1
@@ -253,10 +277,11 @@ def main():
                 break
 
             r_sum += r
-            #visualize
-            # env.render()
+            # visualize
+            if render_env_bool:
+                env.render()
 
-        eps = max(0.01, ARGS.eps_decay*eps)
+        eps = max(0.01, ARGS.eps_decay * eps)
         rewards_per_episode.append(r_sum)
         episode_durations.append(epi_duration)
         scores_window.append(r_sum)
@@ -274,61 +299,65 @@ def main():
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
         # if np.mean(scores_window)>=200.0:
         #     print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(i_episode-100, np.mean(scores_window)))
-            # break
+        # break
 
         # if epi_duration >= 500: # this value is environment dependent
         #     print("Failed to complete in trial {}".format(i_episode))
 
         # else:
-            # print("Completed in {} trials".format(i_episode))
-            # break
+        # print("Completed in {} trials".format(i_episode))
+        # break
 
     # close files
     fd.close()
     fr.close()
 
     env.close()
-    
+
     print(f"Saving weights to {filename}")
     torch.save({
         # You can add more here if you need, e.g. critic
         'policy': model.state_dict()  # Always save weights rather than objects
     },
-    filename)
+        filename)
 
-    plt.plot(smooth(episode_durations,10))
+    plt.plot(smooth(episode_durations, 10))
     plt.title('Episode durations per episode')
-    #plt.show()
-    plt.savefig("images/" + str(ARGS.buffer) + "_" + str(ARGS.replay) +'_'+ARGS.pmethod+ '_' + ARGS.env + '_Episode'+ "%d.png" % file_counter)
+    # plt.show()
+    plt.savefig("images/" + str(ARGS.buffer) + "_" + str(
+        ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_Episode' + "%d.png" % file_counter)
 
-    plt.plot(smooth(rewards_per_episode,10))
+    plt.plot(smooth(rewards_per_episode, 10))
     plt.title("Rewards per episode")
-    #plt.show()
-    plt.savefig("images/"+ str(ARGS.buffer) + "_" + str(ARGS.replay) +'_'+ARGS.pmethod+ '_' + ARGS.env + '_Rewards' + "%d.png" % file_counter)
+    # plt.show()
+    plt.savefig("images/" + str(ARGS.buffer) + "_" + str(
+        ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_Rewards' + "%d.png" % file_counter)
     return episode_durations
+
 
 def get_action(state, model):
     return model(state).multinomial(1)
 
+
 def evaluate():
     if ARGS.replay == 'PER':
-        filename = 'weights_'+str(ARGS.replay)+'_'+ARGS.pmethod+'_'+ ARGS.env +'_.pt'
+        filename = 'weights_' + str(ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_.pt'
     else:
-        filename = 'weights_'+str(ARGS.replay)+'_'+ ARGS.env +'_.pt'
+        filename = 'weights_' + str(ARGS.replay) + '_' + ARGS.env + '_.pt'
 
     env, (input_size, output_size) = get_env(ARGS.env)
-    #set env seed
+    # set env seed
     env.seed(seed_value)
 
-    network = { 'CartPole-v1':CartNetwork(input_size, output_size, ARGS.num_hidden).to(device),
-            'MountainCar-v0':MountainNetwork(input_size, output_size, ARGS.num_hidden).to(device),
-            'LunarLander-v2':LanderNetwork(input_size, output_size, ARGS.num_hidden).to(device)}
-    
-    model =  network[ARGS.env]
+    network = {'CartPole-v1': CartNetwork(input_size, output_size, ARGS.num_hidden).to(device),
+               'MountainCar-v0': MountainNetwork(input_size, output_size, ARGS.num_hidden).to(device),
+               'LunarLander-v2': LanderNetwork(input_size, output_size, ARGS.num_hidden).to(device)}
+
+    model = network[ARGS.env]
     model.eval()
     if os.path.isfile(filename):
         print(f"Loading weights from {filename}")
-        #weights = torch.load(filename)
+        # weights = torch.load(filename)
         weights = torch.load(filename, map_location=lambda storage, loc: storage)
         model.load_state_dict(weights['policy'])
     else:
@@ -348,11 +377,12 @@ def evaluate():
         episode_durations.append(steps)
         print(i)
     env.close()
-    
+
     plt.plot(episode_durations)
     plt.title('Episode durations')
     plt.show()
-    #plt.savefig('foo.png')
+    # plt.savefig('foo.png')
+
 
 if __name__ == "__main__":
 
@@ -363,27 +393,27 @@ if __name__ == "__main__":
     path2 = "results"
     if not os.path.exists(path2):
         os.mkdir(path2)
-        
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_episodes', default=1000, type=int,
                         help='max number of episodes')
     parser.add_argument('--batch_size', default=64, type=int)
-                      
+
     parser.add_argument('--num_hidden', default=64, type=int,
                         help='dimensionality of hidden space')
     parser.add_argument('--lr', default=5e-4, type=float)
     parser.add_argument('--discount_factor', default=0.8, type=float)
-    parser.add_argument('--replay', default='PER',type=str,choices = ['CombinedReplayMemory',\
-                        'NaiveReplayMemory','PER'],
-                         help='type of experience replay')
+    parser.add_argument('--replay', default='PER', type=str, choices=['CombinedReplayMemory', \
+                                                                      'NaiveReplayMemory', 'PER', 'MinMax'],
+                        help='type of experience replay')
     parser.add_argument('--env', default='CartPole-v1', type=str,
                         help='environments you want to evaluate')
     parser.add_argument('--buffer', default='10000', type=int,
                         help='buffer size for experience replay')
     parser.add_argument('--beta0', default=0.4, type=float)
-    parser.add_argument('--pmethod', type=str, choices=['prop','rank'] ,default='prop', \
-                help='proritized reply method: {prop or rank}')
-    parser.add_argument('--TAU', default=1e-3, type=float,\
+    parser.add_argument('--pmethod', type=str, choices=['prop', 'rank'], default='prop', \
+                        help='proritized reply method: {prop or rank}')
+    parser.add_argument('--TAU', default=1e-3, type=float, \
                         help='parameter for soft update of weight; set it to one for hard update')
     parser.add_argument('--EPS', default='1.0', type=float,
                         help='epsilon')
@@ -392,12 +422,14 @@ if __name__ == "__main__":
     parser.add_argument('--update_freq', default=500, help='Update frequence in steps of target network parametes')
     parser.add_argument('--norm', default='True', type=bool,
                         help="weight normalization: {True, False}")
+    parser.add_argument('--render_env', default=0, type=int,
+                        help='render environment once every number of steps, 0 does not render the environment')
 
     ARGS = parser.parse_args()
     print(ARGS)
     main()
     # evaluate()
 
-# python train.py --num_episodes 1000 --batch_size 64 --num_hidden 64 --lr 5e-4 --discount_factor 0.8 --replay NaiveReplayMemory --env CartPole-v1 --buffer 10000 --pmethod prop --TAU 0.1
-# python train.py --num_episodes 1000 --batch_size 64 --num_hidden 64 --lr 5e-4 --discount_factor 0.99 --replay NaiveReplayMemory --env LunarLander-v2 --buffer 100000 --pmethod prop --TAU 0.1
-# python train.py --env MountainCar-v0 --lr 5e-4 --discount_factor 0.99 --TAU 0.1 --buffer 10000
+# python train.py --num_episodes 1000 --batch_size 64 --render_env 10 --num_hidden 64 --lr 5e-4 --discount_factor 0.8 --replay NaiveReplayMemory --env CartPole-v1 --buffer 10000 --pmethod prop --TAU 0.1
+# python train.py --num_episodes 1000 --batch_size 64 --render_env 10 --num_hidden 64 --lr 5e-4 --discount_factor 0.99 --replay NaiveReplayMemory --env LunarLander-v2 --buffer 100000 --pmethod prop --TAU 0.1
+# python train.py --env MountainCar-v0 --lr 5e-4 --render_env 10 --discount_factor 0.99 --TAU 0.1 --buffer 10000 --replay CombinedReplayMemory
