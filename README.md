@@ -4,10 +4,10 @@ This is a group project for the Reinforcemnt learning course offered in M.Sc Art
 at the University of Amsterdam.
 
 ### Contributors
+* [David Speck](https://github.com/Saduras)
 * [Masoumeh Bakhtiariziabari](https://github.com/mbakhtiariz)
-* [Tarun Krishna](https://github.com/KrishnaTarun)
-* [Dhruba Pujary](https://github.com/druv022)
-* Thomas A. Unger
+* [Ruth last name](https://github.com/VictorZuanazzi)
+* [Victor Zuanazzi](https://github.com/VictorZuanazzi)
 
 
 
