@@ -11,3 +11,7 @@ __pycache__/environment.cpython-37.pyc
 images/
 
 code/__pycache__/
+
+.idea/inspectionProfiles/
+
+.idea/
