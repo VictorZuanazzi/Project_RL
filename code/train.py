@@ -108,7 +108,7 @@ def train(model, model_target, memory, optimizer, batch_size, discount_factor, T
 
         except:
             print("Some problem with transitions: ", transitions)
-            try_again = False
+            try_again = True
 
     # convert to PyTorch and define types
     state = torch.tensor(state, dtype=torch.float).to(device)
