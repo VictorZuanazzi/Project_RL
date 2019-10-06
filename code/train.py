@@ -11,16 +11,14 @@ from tqdm import tqdm as _tqdm
 from torch.autograd import Variable
 import random, os
 
-# -------setup seed-----------
-seed_value = 5
-random.seed(seed_value)
-torch.manual_seed(seed_value)
-np.random.seed(seed_value)
-# ----------------------------
-
 # ----device-----------
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
+
+def set_seed(seed_value=660066):
+    random.seed(seed_value)
+    torch.manual_seed(seed_value)
+    np.random.seed(seed_value)
 
 
 def tqdm(*args, **kwargs):
@@ -424,11 +422,15 @@ if __name__ == "__main__":
                         help="weight normalization: {True, False}")
     parser.add_argument('--render_env', default=0, type=int,
                         help='render environment once every number of steps, 0 does not render the environment')
+    parser.add_argument('--set_seed', default=0, type=int,
+                        help='seed to set the start of the random generators')
 
     ARGS = parser.parse_args()
     print(ARGS)
+
+    set_seed(ARGS.set_seed)
     main()
-    # evaluate()
+    evaluate()
 
 # python train.py --num_episodes 1000 --batch_size 64 --render_env 10 --num_hidden 64 --lr 5e-4 --discount_factor 0.8 --replay NaiveReplayMemory --env CartPole-v1 --buffer 10000 --pmethod prop --TAU 0.1
 # python train.py --num_episodes 1000 --batch_size 64 --render_env 10 --num_hidden 64 --lr 5e-4 --discount_factor 0.99 --replay NaiveReplayMemory --env LunarLander-v2 --buffer 100000 --pmethod prop --TAU 0.1
