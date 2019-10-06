@@ -85,23 +85,30 @@ def compute_target(model_target, reward, next_state, done, discount_factor):
 
 
 def train(model, model_target, memory, optimizer, batch_size, discount_factor, TAU, iter, beta=None):
-    # DO NOT MODIFY THIS FUNCTION
 
     # don't learn without some decent experience
     if len(memory) < batch_size:
         return None
 
-    # transition batch is taken from experience replay memory
-    if ARGS.replay == 'PER':
-        transitions, batch_idx, priorities = memory.sample(batch_size)
-    else:
-        transitions = memory.sample(batch_size)
+    try_again = True
+    while try_again:
+        try:
+            # transition batch is taken from experience replay memory
+            if ARGS.replay == 'PER':
+                transitions, batch_idx, priorities = memory.sample(batch_size)
+            else:
+                transitions = memory.sample(batch_size)
 
-    if type(transitions[0]) == int:
-        return None
-    # print(batch_idx)
-    # transition is a list of 5-tuples, instead we want 5 vectors (as torch.Tensor's)
-    state, action, reward, next_state, done = zip(*transitions)
+            if type(transitions[0]) == int:
+                return None
+            # print(batch_idx)
+            # transition is a list of 5-tuples, instead we want 5 vectors (as torch.Tensor's)
+            state, action, reward, next_state, done = zip(*transitions)
+            try_again = False
+
+        except:
+            print("Some problem with transitions: ", transitions)
+            try_again = False
 
     # convert to PyTorch and define types
     state = torch.tensor(state, dtype=torch.float).to(device)
@@ -345,7 +352,7 @@ def evaluate():
 
     env, (input_size, output_size) = get_env(ARGS.env)
     # set env seed
-    env.seed(seed_value)
+    env.seed(ARGS.set_seed)
 
     network = {'CartPole-v1': CartNetwork(input_size, output_size, ARGS.num_hidden).to(device),
                'MountainCar-v0': MountainNetwork(input_size, output_size, ARGS.num_hidden).to(device),
@@ -425,7 +432,24 @@ if __name__ == "__main__":
     parser.add_argument('--set_seed', default=0, type=int,
                         help='seed to set the start of the random generators')
 
+
+
     ARGS = parser.parse_args()
+
+    # # debug
+    # ARGS.num_episodes = 1000
+    # ARGS.batch_size = 64
+    # ARGS.render_env = 0
+    # ARGS.num_hidden = 64
+    # ARGS.discount_factor = 0.99
+    # ARGS.lr = 5e-4
+    # ARGS.replay = 'PER'
+    # ARGS.pmethod = 'prop'
+    # ARGS.env = 'LunarLander-v2'
+    # ARGS.buffer = 1000
+    # ARGS.TAU = 0.1
+    # ARGS.set_seed = 999
+
     print(ARGS)
 
     set_seed(ARGS.set_seed)
@@ -435,3 +459,6 @@ if __name__ == "__main__":
 # python train.py --num_episodes 1000 --batch_size 64 --render_env 10 --num_hidden 64 --lr 5e-4 --discount_factor 0.8 --replay NaiveReplayMemory --env CartPole-v1 --buffer 10000 --pmethod prop --TAU 0.1
 # python train.py --num_episodes 1000 --batch_size 64 --render_env 10 --num_hidden 64 --lr 5e-4 --discount_factor 0.99 --replay NaiveReplayMemory --env LunarLander-v2 --buffer 100000 --pmethod prop --TAU 0.1
 # python train.py --env MountainCar-v0 --lr 5e-4 --render_env 10 --discount_factor 0.99 --TAU 0.1 --buffer 10000 --replay CombinedReplayMemory
+
+# this one is broken
+# python train.py --num_episodes 1000 --batch_size 64 --render_env 0 --num_hidden 64 --lr 5e-4 --discount_factor 0.99 --replay PER --env LunarLander-v2 --buffer 10000 --pmethod prop --TAU 0.1 --set_seed 999
