@@ -1,6 +1,6 @@
 # Project_RL
 
-This is a group project for the Reinforcemnt learning course offered in M.Sc Artifical Intelligence 
+This is a group project for the Reinforcement learning course offered in M.Sc Artificial Intelligence 
 at the University of Amsterdam.
 
 ### Contributors
@@ -9,11 +9,9 @@ at the University of Amsterdam.
 * [Ruth last name](https://github.com/VictorZuanazzi)
 * [Victor Zuanazzi](https://github.com/VictorZuanazzi)
 
-
-
 ## Problem Statement
 
-There are different types of experience replay, e.g.  prioritised experiencereplay  and  hindsight  experience  replay.   Compare  two  or  more  types  ofexperience replay.  Does the ‘winner’ depend on the type of environment?
+There are different types of experience replay, e.g. prioritized experience replay and hindsight experience replay. Compare two or more types of experience replay. Does the ‘winner’ depend on the type of environment?
 
 ## Experience Replays
 We mainly experimented with three experience replays techniques which are:
