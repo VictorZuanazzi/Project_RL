@@ -9,6 +9,13 @@ at the University of Amsterdam.
 * [Ruth last name](https://github.com/VictorZuanazzi)
 * [Victor Zuanazzi](https://github.com/VictorZuanazzi)
 
+## Dependencies
+
+This project uses python 3. To install dependencies run:
+```
+pip install -r requirements.txt
+```
+
 ## Problem Statement
 
 There are different types of experience replay, e.g. prioritized experience replay and hindsight experience replay. Compare two or more types of experience replay. Does the ‘winner’ depend on the type of environment?
