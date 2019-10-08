@@ -26,15 +26,16 @@ def plot_data(data_mean, data_std,title, color,label='',y_label=''):
 
     plt.plot(smooth(data_mean),color=color, label=label)
     plt.fill_between(data_x,data_y_plus,data_y_minus,color=color,alpha=0.2)
-    plt.xlabel('Episodes')
-    plt.ylabel(y_label)
-    plt.title(title)
-    plt.grid()
+    plt.xlabel('Episodes',fontsize=20)
+    plt.ylabel(y_label,fontsize=20)
+    plt.title(title,fontsize=20)
+    plt.grid(b=True, which='major', color='b', linestyle='-')
     plt.legend()
 
 def read_files():
     j = 0
     fd_name = ARGS.file+"0.txt"
+    print(fd_name)
     exists = os.path.isfile(fd_name)
     data_all = []#np.array([])
     while exists:
@@ -45,6 +46,7 @@ def read_files():
             data.append(int(data_tmp[i]))
         j += 1
         fd_name = ARGS.file+"%d.txt" % j
+        print(fd_name)
         exists = os.path.isfile(fd_name)
         # if not data_all.size:
         #     data_all = np.asarray(data)
@@ -66,11 +68,13 @@ def read_file(file_name):
 def plot_comb_experiments():
     counter = 0
     if not ARGS.common:
+        print("in first")
         # file_name1 = ARGS.file + "_duration"
         episodes_data = read_files()
+        print(episodes_data)
         data_mean1 = np.mean(episodes_data,axis=0)
         data_std1 = np.std(episodes_data,axis=0)
-        
+
         save_file(data_mean1, 'mean_'+ARGS.newFile+'_durations.txt')
         save_file(data_std1, 'std_'+ ARGS.newFile+'_durations.txt')
 
@@ -83,14 +87,20 @@ def plot_comb_experiments():
     else:
         
         files = [f for f in os.listdir('.') if os.path.isfile(f)]
+        print(files)
         for f in files:
             if 'durations' in f:
                 if 'mean' in f:
+                    print(f)
                     data_mean1 = read_file(f)
                     std_file = f.replace('mean','std')
                     std1 = read_file(std_file)
                     color, counter = get_color(counter)
-                    label = f.replace('mean_','').replace('_durations.txt','')
+                    #_PER_rank_MountainCar-v0_rewards
+                    #label = f.replace('mean_','').replace('_durations.txt','').replace('_PER_rank_CartPole-v1','')
+                    label = f.replace('mean_', '').replace('_durations.txt', '')
+                    if 'CombinedReplayMemory' in f or 'NaiveReplayMemory' in f:
+                        label = label.replace('_prop','')
                     plot_data(data_mean1, std1, 'Episode durations per episode', color, label=label, y_label='Episodes duration')
         
         plt.show()
@@ -100,11 +110,15 @@ def plot_comb_experiments():
         for f in files:
             if 'rewards' in f:
                 if 'mean' in f:
+                    print(f)
                     data_mean2 = read_file(f)
                     std_file = f.replace('mean','std')
                     std2 = read_file(std_file)
                     color, counter = get_color(counter)
-                    label = f.replace('mean_','').replace('_rewards.txt','')
+                    label = f.replace('mean_', '').replace('_rewards.txt', '')
+                    if 'CombinedReplayMemory' in f or 'NaiveReplayMemory' in f:
+                        label = label.replace('_prop','')
+                    #label = f.replace('mean_','').replace('_rewards.txt','').replace('_PER_rank_CartPole-v1','')
                     plot_data(data_mean2, std2, 'Rewards per episode', color, label=label, y_label='Rewards')
         plt.show()
 
@@ -136,16 +150,17 @@ def plot_buffer(buffer_sizes):
 def main():
     plot_comb_experiments()
 
-    # buffer_sizes = [100,1000,10000,100000]
-    # plot_buffer(buffer_sizes)
+    #buffer_sizes = [100,1000,10000,100000]
+    #plot_buffer(buffer_sizes)
 
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', default='100_PER_prop_rewards', type=str,
+    parser.add_argument('--file', default='_PER_rank_MountainCar-v0_durations', type=str,
                         help='name of file to read until numeric value') # 'NaiveReplayMemory_prop_durations', 
-    parser.add_argument('--newFile', default='CombinedReplay',type=str, help='Name of the file')
+    parser.add_argument('--newFile', default='_PER_rank_MountainCar-v0',type=str, help='Name of the file')
     parser.add_argument('--common', action='store_false', help='generate common plot')
     ARGS = parser.parse_args()
+    print(ARGS)
     main()
