@@ -187,14 +187,14 @@ class RankBased:
             self._update_priorities()
         self.total = numpy.sum(self.priorities)
         self.cum_sum = numpy.cumsum(self.priorities)
-        batch_idx = []
+
         batch = []
         priorities = []
 
         rands = numpy.random.rand(n) * self.total
         batch_idx = numpy.searchsorted(self.cum_sum, rands)
         for idx in batch_idx:
-            batch.append(self.data[idx][1:0])
+            batch.append(self.data[idx][:-1])
             priorities.append(self.priorities[idx])
 
         return batch, batch_idx, priorities
