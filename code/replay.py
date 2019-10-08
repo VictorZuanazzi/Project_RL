@@ -1,7 +1,7 @@
 import random
 from collections import deque
 from environment import get_env
-import numpy
+import numpy as np
 
 
 class BufferSizeManager:
@@ -137,8 +137,8 @@ class SumTree:
 
     def __init__(self, max_capacity):
         self.capacity = max_capacity
-        self.tree = numpy.zeros(2 * max_capacity - 1)
-        self.data = numpy.zeros(max_capacity, dtype=object)
+        self.tree = np.zeros(2 * max_capacity - 1)
+        self.data = np.zeros(max_capacity, dtype=object)
         self.num = 0
         self.e = 0.01
         self.a = 0.6
@@ -243,14 +243,14 @@ class RankBased:
 
     def _get_single(self):
         rand = random.uniform(0, self.total)
-        index = numpy.searchsorted(self.cum_sum, rand)
+        index = np.searchsorted(self.cum_sum, rand)
         return index, self.priorities[index], self.data[index][:-1]  # to exclude the error at the end
 
     def get_batch(self, n):
         if self.update_flag or self.priorities is None:
             self._update_priorities()
-        self.total = numpy.sum(self.priorities)
-        self.cum_sum = numpy.cumsum(self.priorities)
+        self.total = np.sum(self.priorities)
+        self.cum_sum = np.cumsum(self.priorities)
         batch_idx = []
         batch = []
         priorities = []
@@ -267,9 +267,9 @@ class RankBased:
 
     def _update_priorities(self):
         length = self.get_len()
-        errors = numpy.array([data[-1] for data in self.data])
-        order = numpy.argsort(errors)
-        order = numpy.array([order[order[x]] for x in range(length)])
+        errors = np.array([data[-1] for data in self.data])
+        order = np.argsort(errors)
+        order = np.array([order[order[x]] for x in range(length)])
         order = length - order
         self.priorities = 1. / order
         self.update_flag = False
