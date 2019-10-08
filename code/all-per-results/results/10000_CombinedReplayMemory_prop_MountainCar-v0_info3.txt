@@ -1,0 +1,1 @@
+Namespace(EPS=1.0, TAU=0.1, batch_size=64, beta0=0.4, buffer=10000, discount_factor=0.99, env='MountainCar-v0', eps_decay=0.995, lr=0.0005, norm=True, num_episodes=1000, num_hidden=64, pmethod='prop', replay='CombinedReplayMemory', update_freq=500, use_cuda=False)
