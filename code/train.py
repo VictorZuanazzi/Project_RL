@@ -421,13 +421,14 @@ if __name__ == "__main__":
     parser.add_argument('--seed_value', default=42, type=int,
                         help='seed to set in random, numpy and pytorch to ensure reproducibility')
 
+    ARGS = parser.parse_args()
+
     # -------setup seed-----------
     random.seed(ARGS.seed_value)
     torch.manual_seed(ARGS.seed_value)
     np.random.seed(ARGS.seed_value)
     # ----------------------------
 
-    ARGS = parser.parse_args()
     print(ARGS)
     main()
     # evaluate()
