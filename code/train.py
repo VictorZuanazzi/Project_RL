@@ -57,14 +57,12 @@ def soft_update(local_model, target_model, tau):
 
 
 def compute_q_val(model, state, action):
-    # YOUR CODE HERE
     actions = model(state)
     return actions.gather(1, action.unsqueeze(1))
 
 
 def compute_target(model_target, reward, next_state, done, discount_factor):
     # done is a boolean (vector) that indicates if next_state is terminal (episode is done)
-    # YOUR CODE HERE
     non_terminal_states_mask = torch.tensor([1 if not s else 0 for s in done])
     right_index = non_terminal_states_mask.nonzero().squeeze(1) if len(non_terminal_states_mask.nonzero().size()) > 1 \
         else non_terminal_states_mask.nonzero().squeeze(0)
@@ -78,9 +76,7 @@ def compute_target(model_target, reward, next_state, done, discount_factor):
 
     return target.detach().unsqueeze(1)
 
-
 def train(model, model_target, memory, optimizer, batch_size, discount_factor, TAU, iter, beta=None):
-    # DO NOT MODIFY THIS FUNCTION
 
     # don't learn without some decent experience
     if len(memory) < batch_size:
@@ -221,12 +217,16 @@ def main():
     # -------------------------------------------------------
 
     for i_episode in tqdm(range(ARGS.num_episodes), ncols=100):
-        # YOUR CODE HERE
+
         # Sample a transition
         s = env.reset()
         done = False
         epi_duration = 0
         r_sum = 0
+
+        # for debugging purposes:
+        if (ARGS.debug_mode):
+            print(f"buffser size: {len(replay)}")
 
         render_env_bool = False
         if (ARGS.render_env > 0) and not (i_episode % ARGS.render_env):
@@ -242,7 +242,7 @@ def main():
 
             model.train()
             s_next, r, done, _ = env.step(a)
-
+            
             beta = None
             if ARGS.replay == 'PER':
                 state = torch.tensor(s, dtype=torch.float).to(device).unsqueeze(0)
@@ -403,6 +403,10 @@ if __name__ == "__main__":
                         help='environments you want to evaluate')
     parser.add_argument('--buffer', default='10000', type=int,
                         help='buffer size for experience replay')
+    parser.add_argument('--buffer_type', default="static", type=str,
+                        choices=['static', 'adaptive'],
+                        help="chose from constant (static) and dynamic (adaptive) buffer size.")
+
     parser.add_argument('--beta0', default=0.4, type=float)
     parser.add_argument('--pmethod', type=str, choices=['prop', 'rank'], default='prop', \
                         help='proritized reply method: {prop or rank}')
@@ -420,6 +424,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--seed_value', default=42, type=int,
                         help='seed to set in random, numpy and pytorch to ensure reproducibility')
+
+    parser.add_argument('--debug_mode', action='store_true',
+                        help='put code in debuging mode.')
 
     ARGS = parser.parse_args()
 
