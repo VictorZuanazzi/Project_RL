@@ -20,6 +20,7 @@ class NaiveReplayMemory:
     def __len__(self):
         return len(self.memory)
 
+
 class MinMaxNaiveReplayMemory:
 
     def __init__(self, capacity):
@@ -39,15 +40,11 @@ class MinMaxNaiveReplayMemory:
         elif (self.min_reward == []) or (transition[2] < self.min_reward[2]):
             self.min_reward = transition
 
-
-
-
     def sample(self, batch_size):
         sample = random.sample(self.memory, batch_size - 2)
         sample.append(self.max_reward)
         sample.append(self.min_reward)
         return sample
-
 
     def __len__(self):
         return len(self.memory)
@@ -185,11 +182,6 @@ class RankBased:
     def update(self, idx, error):
         self.data[idx][-1] = error
 
-    def _get_single(self):
-        rand = random.uniform(0, self.total)
-        index = numpy.searchsorted(self.cum_sum, rand)
-        return index, self.priorities[index], self.data[index][:-1]  # to exclude the error at the end
-
     def get_batch(self, n):
         if self.update_flag or self.priorities is None:
             self._update_priorities()
@@ -199,11 +191,12 @@ class RankBased:
         batch = []
         priorities = []
 
-        for i in range(n):
-            (idx, p, data) = self._get_single()
-            batch.append(data)
-            batch_idx.append(idx)
-            priorities.append(p)
+        rands = numpy.random.rand(n) * self.total
+        batch_idx = numpy.searchsorted(self.cum_sum, rands)
+        for idx in batch_idx:
+            batch.append(self.data[idx][1:0])
+            priorities.append(self.priorities[idx])
+
         return batch, batch_idx, priorities
 
     def get_len(self):
@@ -243,11 +236,11 @@ class PrioritizedReplayMemory:  # stored as ( s, a, r, s_ ) in SumTree
         return self.container.get_len()
 
 
-
 # sanity check
 if __name__ == "__main__":
     capacity = 10
-    memory = PrioritizedReplayMemory(capacity)  # CombinedReplayMemory(capacity)#NaiveReplayMemory(capacity)
+    # CombinedReplayMemory(capacity)#NaiveReplayMemory(capacity)
+    memory = PrioritizedReplayMemory(capacity)
 
     env, _ = get_env("Acrobot-v1")
 
