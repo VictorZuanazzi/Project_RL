@@ -146,8 +146,7 @@ def main():
     # update this disctionary as per the implementation of methods
     memory = {'NaiveReplayMemory': NaiveReplayMemory,
               'CombinedReplayMemory': CombinedReplayMemory,
-              'PER': PrioritizedReplayMemory,
-              'MinMax': MinMaxNaiveReplayMemory}
+              'PER': PrioritizedReplayMemory}
 
 
     if ARGS.adaptive_buffer:
@@ -416,7 +415,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', default=5e-4, type=float)
     parser.add_argument('--discount_factor', default=0.8, type=float)
     parser.add_argument('--replay', default='PER', type=str, choices=['CombinedReplayMemory', \
-                                                                      'NaiveReplayMemory', 'PER', 'MinMax'],
+                                                                      'NaiveReplayMemory', 'PER'],
                         help='type of experience replay')
     parser.add_argument('--env', default='CartPole-v1', type=str,
                         help='environments you want to evaluate')
