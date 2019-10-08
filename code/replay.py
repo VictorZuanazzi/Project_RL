@@ -3,13 +3,54 @@ from collections import deque
 from environment import get_env
 import numpy
 
+
+class BufferSizeManager:
+    def __init__(self, initial_capacity, size_change=20):
+        """Adaptive buffer size.
+
+        If size_change > 1:  Linear buffer update as in: https://arxiv.org/pdf/1710.06574.pdf
+        If size_change in [0, 1]: Percentage update.
+        If size_change < 0 then the algorithm works in the inverse manner as described in the paper.
+
+        You should imagine the buffer manager as a mid-aged fat man that believes his role is key in the success of
+        the company, even though many people think they could do without him."""
+
+        self.capacity = initial_capacity
+        self.k = size_change
+        self.td_error = 0
+
+    def update_td_error(self, new_td_error):
+        self.td_error = abs(new_td_error)
+
+    def update_memory_size(self, new_td_error):
+        new_td_error = abs(new_td_error)
+
+        # update = -1 if new_td_error < self.td_error, then the buffer must decrease;
+        # update = 1 if new_td_error > self.td_error, than the buffer must increase.
+        update = (new_td_error - self.td_error) / abs(new_td_error - self.td_error)
+
+        # allow for non-linear update (not covered in the method proposed by the paper)
+        if abs(self.k) < 1:
+            update *= int(self.capacity * self.k)
+        else:
+            update *= int(self.k)
+
+        # Update the buffer size
+        self.capacity = max(self.capacity + update, 1)
+
+        # Update the stored td_error
+        self.update_td_error(new_td_error)
+
+        return self.capacity
+
+
 class NaiveReplayMemory:
 
     def __init__(self, capacity):
         self.capacity = capacity
 
         # List is necessary for dynamic buffer
-        self.memory = [] #deque(maxlen=capacity)
+        self.memory = []  # deque(maxlen=capacity)
 
     def pop(self, idx=0):
         # Pop is redefined as taking the oldest element (FIFO) for convinience.
@@ -38,6 +79,7 @@ class NaiveReplayMemory:
 
     def __len__(self):
         return len(self.memory)
+
 
 class MinMaxNaiveReplayMemory:
 
@@ -255,7 +297,6 @@ class PrioritizedReplayMemory:  # stored as ( s, a, r, s_ ) in SumTree
 
     def __len__(self):
         return self.container.get_len()
-
 
 
 # sanity check
