@@ -43,6 +43,7 @@ class BufferSizeManager:
 
         return self.capacity
 
+# TODO: Combined can inherit Naive and overwrite what is necessary. To avoid copy paste bugs.
 
 class NaiveReplayMemory:
 
@@ -90,19 +91,45 @@ class CombinedReplayMemory:
 
     def __init__(self, capacity):
         self.capacity = capacity
-        self.memory = deque(maxlen=capacity)
+
+        # It is necessary to use List data structure for dynamic buffer.
+        self.memory = []
+
+    def pop(self, idx=0):
+        # Pop is redefined as taking the oldest element (FIFO) for convinience.
+        return self.memory.pop(idx)
 
     def push(self, transition):
+
+        if len(self.memory) >= self.capacity:
+            _ = self.pop()
+
         self.memory.append(transition)
         self.transition = transition
 
+    def memory_full(self):
+        return len(self.memory) >= self.capacity
+
     def sample(self, batch_size):
+
         samples = random.sample(self.memory, batch_size - 1)
         samples.append(self.transition)
         return samples
 
     def __len__(self):
         return len(self.memory)
+
+    def resize_memory(self, new_size=None):
+        """Redefines the size of the buffer.
+        Inputs:
+            new_size (type: int), capacity = new_size."""
+
+        self.capacity = new_size
+
+        # Oldest experiences are discarded. For Ever.
+        # TODO: Check for a more efficient way of cleaning the memory.
+        while len(self.memory) > self.capacity:
+            _ = self.pop()
 
 
 class SumTree:
