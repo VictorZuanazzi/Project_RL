@@ -1,3 +1,5 @@
+from collections import deque
+
 import numpy as np
 from environment import get_env
 from model import *
@@ -232,7 +234,7 @@ def main():
 
         # for debugging purposes:
         if (ARGS.debug_mode):
-            print(f"buffser size: {len(replay)}")
+            print(f"buffer size: {len(replay)}, r: {episode_durations[-1] if len(episode_durations) >=1 else 0}")
 
         render_env_bool = False
         if (ARGS.render_env > 0) and not (i_episode % ARGS.render_env):
@@ -250,7 +252,11 @@ def main():
             s_next, r, done, _ = env.step(a)
 
             beta = None
-            if (ARGS.replay == 'PER') or ARGS.adaptive_buffer:
+
+            # The TD-error is necessary if replay == PER OR if we are using adaptive buffer and the memory is full
+            get_td_error = (ARGS.replay == 'PER') or (ARGS.adaptive_buffer and replay.memory_full())
+
+            if get_td_error:
                 state = torch.tensor(s, dtype=torch.float).to(device).unsqueeze(0)
                 action = torch.tensor(a, dtype=torch.int64).to(device).unsqueeze(0)  # Need 64 bit to use them as index
                 next_state = torch.tensor(s_next, dtype=torch.float).to(device).unsqueeze(0)
@@ -261,11 +267,11 @@ def main():
                     target = compute_target(model_target, reward, next_state, done_, ARGS.discount_factor)
                 td_error = F.smooth_l1_loss(q_val, target)
 
-                # redefines memory size
-                new_buffer_size = manage_memory.update_memory_size(td_error.item())
-                replay.resize_memory(new_buffer_size)
+                if ARGS.adaptive_buffer and replay.memory_full():
+                    new_buffer_size = manage_memory.update_memory_size(td_error.item())
+                    replay.resize_memory(new_buffer_size)
 
-            if (ARGS.replay == 'PER'):
+            if ARGS.replay == 'PER':
                 replay.push(td_error, (s, a, r, s_next, done))
                 beta = get_beta(i_episode, ARGS.num_episodes, ARGS.beta0)
             else:
@@ -319,6 +325,7 @@ def main():
 
     env.close()
 
+    print(f"max episode duration {max(episode_durations)}")
     print(f"Saving weights to {filename}")
     torch.save({
         # You can add more here if you need, e.g. critic
@@ -441,7 +448,7 @@ if __name__ == "__main__":
                         help='put code in debuging mode.')
     parser.add_argument('--adaptive_buffer', action='store_true',
                         help='activate adapitive buffer')
-    parser.add_argument('--buffer_step_size', default=20)
+    parser.add_argument('--buffer_step_size', default=20, type=float)
 
     ARGS = parser.parse_args()
 

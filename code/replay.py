@@ -56,6 +56,9 @@ class NaiveReplayMemory:
         # Pop is redefined as taking the oldest element (FIFO) for convinience.
         return self.memory.pop(idx)
 
+    def memory_full(self):
+        return len(self.memory) >= self.capacity
+
     def push(self, transition):
 
         if len(self.memory) >= self.capacity:
@@ -74,6 +77,7 @@ class NaiveReplayMemory:
         self.capacity = new_size
 
         # Oldest experiences are discarded. For Ever.
+        # TODO: Check for a more efficient way of cleaning the memory.
         while len(self.memory) > self.capacity:
             _ = self.pop()
 
