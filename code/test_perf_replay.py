@@ -4,7 +4,7 @@ from time import time
 
 
 def test_performance():
-    capacity = 1_000_000
+    capacity = 10_000
     num_push = capacity * 2
     num_sample = capacity * 2
     sample_size = 100
@@ -23,12 +23,13 @@ def test_performance():
 
         # push transition to memory
         memory.push(err, (s, a, r, s_next, done))
-    print(f'{num_push} took {time() - start_push_time:.3f}s')
+    print(f'push {num_push} took {time() - start_push_time:.3f}s')
 
     start_sample_time = time()
     for _ in range(num_sample):
         memory.sample(sample_size)
-    print(f'{num_sample} of size {sample_size} took {time() - start_sample_time:.3f}s')
+    print(
+        f'sample {num_sample} of size {sample_size} took {time() - start_sample_time:.3f}s')
 
 
 if __name__ == "__main__":
