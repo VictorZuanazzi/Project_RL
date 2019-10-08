@@ -84,36 +84,6 @@ class NaiveReplayMemory:
     def __len__(self):
         return len(self.memory)
 
-
-class MinMaxNaiveReplayMemory:
-
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = deque(maxlen=capacity)
-        self.max_reward = []
-        self.min_reward = []
-
-    def push(self, transition):
-        self.memory.append(transition)
-        self.update_min_max(transition)
-
-    def update_min_max(self, transition):
-
-        if (self.max_reward == []) or (transition[2] > self.max_reward[2]):
-            self.max_reward = transition
-        elif (self.min_reward == []) or (transition[2] < self.min_reward[2]):
-            self.min_reward = transition
-
-    def sample(self, batch_size):
-        sample = random.sample(self.memory, batch_size - 2)
-        sample.append(self.max_reward)
-        sample.append(self.min_reward)
-        return sample
-
-    def __len__(self):
-        return len(self.memory)
-
-
 # Add different experience replay methods
 
 class CombinedReplayMemory:
