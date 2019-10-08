@@ -3,19 +3,38 @@ from collections import deque
 from environment import get_env
 import numpy
 
-
 class NaiveReplayMemory:
 
     def __init__(self, capacity):
         self.capacity = capacity
-        self.memory = deque(maxlen=capacity)
+
+        # List is necessary for dynamic buffer
+        self.memory = [] #deque(maxlen=capacity)
+
+    def pop(self, idx=0):
+        # Pop is redefined as taking the oldest element (FIFO) for convinience.
+        return self.memory.pop(idx)
 
     def push(self, transition):
-        # YOUR CODE HERE
+
+        if len(self.memory) >= self.capacity:
+            _ = self.pop()
+
         self.memory.append(transition)
 
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
+
+    def resize_memory(self, new_size=None):
+        """Redefines the size of the buffer.
+        Inputs:
+            new_size (type: int), capacity = new_size."""
+
+        self.capacity = new_size
+
+        # Oldest experiences are discarded. For Ever.
+        while len(self.memory) > self.capacity:
+            _ = self.pop()
 
     def __len__(self):
         return len(self.memory)
@@ -39,15 +58,11 @@ class MinMaxNaiveReplayMemory:
         elif (self.min_reward == []) or (transition[2] < self.min_reward[2]):
             self.min_reward = transition
 
-
-
-
     def sample(self, batch_size):
         sample = random.sample(self.memory, batch_size - 2)
         sample.append(self.max_reward)
         sample.append(self.min_reward)
         return sample
-
 
     def __len__(self):
         return len(self.memory)
@@ -62,7 +77,6 @@ class CombinedReplayMemory:
         self.memory = deque(maxlen=capacity)
 
     def push(self, transition):
-        # YOUR CODE HERE
         self.memory.append(transition)
         self.transition = transition
 
