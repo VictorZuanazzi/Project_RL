@@ -3,6 +3,9 @@ from collections import deque
 from environment import get_env
 import numpy
 
+import heapq
+from itertools import count
+
 
 class NaiveReplayMemory:
 
@@ -161,40 +164,34 @@ class SumTree:
 class RankBased:
     def __init__(self, max_capacity):
         self.capacity = max_capacity
-        self.data = deque(maxlen=max_capacity)
+        self.data = []
         self.priorities = None
         self.total = None
         self.cum_sum = None
-        self.update_flag = False
-        self.mod = 8
-        self.samples_seen = 0
-        self.aux = deque(maxlen=max_capacity)
+        self.tiebreaker = count()
 
     def add(self, error, data):
-        self.samples_seen += 1
-        self.aux.append(list(data) + [error])
-        if self.samples_seen % self.mod == 0:
-            self.data.extend(self.aux)
-            self.aux.clear()
-            self.update_flag = True
-            self.mod = min(10000, self.mod * 2)
+        # use tie breaker for transitions with equal error
+        data = (error, next(self.tiebreaker), *data)
+        heapq.heappush(self.data, data)
 
     def update(self, idx, error):
-        self.data[idx][-1] = error
+        self.data[idx] = (error, *self.data[idx][1:])
 
     def get_batch(self, n):
-        if self.update_flag or self.priorities is None:
-            self._update_priorities()
+        self._update_priorities()
         self.total = numpy.sum(self.priorities)
         self.cum_sum = numpy.cumsum(self.priorities)
 
         batch = []
         priorities = []
 
+        # sample hole batch indicies is faster than each individual
         rands = numpy.random.rand(n) * self.total
         batch_idx = numpy.searchsorted(self.cum_sum, rands)
+        # picking transitions one by one is faster than indixing with a list
         for idx in batch_idx:
-            batch.append(self.data[idx][:-1])
+            batch.append(self.data[idx][2:])
             priorities.append(self.priorities[idx])
 
         return batch, batch_idx, priorities
@@ -203,13 +200,9 @@ class RankBased:
         return len(self.data)
 
     def _update_priorities(self):
-        length = self.get_len()
-        errors = numpy.array([data[-1] for data in self.data])
-        order = numpy.argsort(errors)
-        order = numpy.array([order[order[x]] for x in range(length)])
-        order = length - order
+        # order is inverse of actual position in heap
+        order = numpy.array(range(self.get_len() + 1, 1, -1))
         self.priorities = 1. / order
-        self.update_flag = False
 
 
 class PrioritizedReplayMemory:  # stored as ( s, a, r, s_ ) in SumTree
