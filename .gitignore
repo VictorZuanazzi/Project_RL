@@ -15,3 +15,5 @@ code/__pycache__/
 .idea/inspectionProfiles/
 
 .idea/
+
+*.swp
