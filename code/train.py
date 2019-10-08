@@ -11,13 +11,6 @@ from tqdm import tqdm as _tqdm
 from torch.autograd import Variable
 import random, os
 
-# -------setup seed-----------
-seed_value = 5
-random.seed(seed_value)
-torch.manual_seed(seed_value)
-np.random.seed(seed_value)
-# ----------------------------
-
 # ----device-----------
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -424,6 +417,15 @@ if __name__ == "__main__":
                         help="weight normalization: {True, False}")
     parser.add_argument('--render_env', default=0, type=int,
                         help='render environment once every number of steps, 0 does not render the environment')
+
+    parser.add_argument('--seed_value', default=42, type=int,
+                        help='seed to set in random, numpy and pytorch to ensure reproducibility')
+
+    # -------setup seed-----------
+    random.seed(ARGS.seed_value)
+    torch.manual_seed(ARGS.seed_value)
+    np.random.seed(ARGS.seed_value)
+    # ----------------------------
 
     ARGS = parser.parse_args()
     print(ARGS)
