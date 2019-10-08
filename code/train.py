@@ -147,6 +147,12 @@ def main():
               'PER': PrioritizedReplayMemory,
               'MinMax': MinMaxNaiveReplayMemory}
 
+
+    if ARGS.adaptive_buffer:
+        # Introduces the buffer manager for the adaptive buffer size.
+        manage_memory = BufferSizeManager(initial_capacity=ARGS.buffer,
+                                      size_change=ARGS.buffer_step_size)
+
     # environment
     env, (input_size, output_size) = get_env(ARGS.env)
     # env.seed(seed_value)
@@ -242,9 +248,9 @@ def main():
 
             model.train()
             s_next, r, done, _ = env.step(a)
-            
+
             beta = None
-            if ARGS.replay == 'PER':
+            if (ARGS.replay == 'PER') or ARGS.adaptive_buffer:
                 state = torch.tensor(s, dtype=torch.float).to(device).unsqueeze(0)
                 action = torch.tensor(a, dtype=torch.int64).to(device).unsqueeze(0)  # Need 64 bit to use them as index
                 next_state = torch.tensor(s_next, dtype=torch.float).to(device).unsqueeze(0)
@@ -254,6 +260,12 @@ def main():
                     q_val = compute_q_val(model, state, action)
                     target = compute_target(model_target, reward, next_state, done_, ARGS.discount_factor)
                 td_error = F.smooth_l1_loss(q_val, target)
+
+                # redefines memory size
+                new_buffer_size = manage_memory.update_memory_size(td_error.item())
+                replay.resize_memory(new_buffer_size)
+
+            if (ARGS.replay == 'PER'):
                 replay.push(td_error, (s, a, r, s_next, done))
                 beta = get_beta(i_episode, ARGS.num_episodes, ARGS.beta0)
             else:
@@ -427,6 +439,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--debug_mode', action='store_true',
                         help='put code in debuging mode.')
+    parser.add_argument('--adaptive_buffer', action='store_true',
+                        help='activate adapitive buffer')
+    parser.add_argument('--buffer_step_size', default=20)
 
     ARGS = parser.parse_args()
 
