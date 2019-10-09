@@ -1,78 +1,141 @@
 import random
 from collections import deque
 from environment import get_env
-import numpy
+import numpy as np
 
 import heapq
 from itertools import count
+
+
+class BufferSizeManager:
+    def __init__(self, initial_capacity, size_change=20):
+        """Adaptive buffer size.
+
+        If size_change > 1:  Linear buffer update as in: https://arxiv.org/pdf/1710.06574.pdf
+        If size_change in [0, 1]: Percentage update.
+        If size_change < 0 then the algorithm works in the inverse manner as described in the paper.
+
+        You should imagine the buffer manager as a mid-aged fat man that believes his role is key in the success of
+        the company, even though many people think they could do without him."""
+
+        self.capacity = initial_capacity
+        self.k = size_change
+        self.td_error = 0
+
+    def update_td_error(self, new_td_error):
+        self.td_error = abs(new_td_error)
+
+    def update_memory_size(self, new_td_error):
+        new_td_error = abs(new_td_error)
+
+        # update = -1 if new_td_error < self.td_error, then the buffer must decrease;
+        # update = 1 if new_td_error > self.td_error, than the buffer must increase.
+        update = (new_td_error - self.td_error) / \
+            abs(new_td_error - self.td_error)
+
+        # allow for non-linear update (not covered in the method proposed by the paper)
+        if abs(self.k) < 1:
+            update *= int(self.capacity * self.k)
+        else:
+            update *= int(self.k)
+
+        # Update the buffer size
+        self.capacity = max(self.capacity + update, 1)
+
+        # Update the stored td_error
+        self.update_td_error(new_td_error)
+
+        return self.capacity
+
+# TODO: Combined can inherit Naive and overwrite what is necessary. To avoid copy paste bugs.
 
 
 class NaiveReplayMemory:
 
     def __init__(self, capacity):
         self.capacity = capacity
-        self.memory = deque(maxlen=capacity)
+
+        # List is necessary for dynamic buffer
+        self.memory = []  # deque(maxlen=capacity)
+
+    def pop(self, idx=0):
+        # Pop is redefined as taking the oldest element (FIFO) for convinience.
+        return self.memory.pop(idx)
+
+    def memory_full(self):
+        return len(self.memory) >= self.capacity
 
     def push(self, transition):
-        # YOUR CODE HERE
+
+        if len(self.memory) >= self.capacity:
+            _ = self.pop()
+
         self.memory.append(transition)
 
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
 
-    def __len__(self):
-        return len(self.memory)
+    def resize_memory(self, new_size=None):
+        """Redefines the size of the buffer.
+        Inputs:
+            new_size (type: int), capacity = new_size."""
 
+        self.capacity = new_size
 
-class MinMaxNaiveReplayMemory:
-
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = deque(maxlen=capacity)
-        self.max_reward = []
-        self.min_reward = []
-
-    def push(self, transition):
-        self.memory.append(transition)
-        self.update_min_max(transition)
-
-    def update_min_max(self, transition):
-
-        if (self.max_reward == []) or (transition[2] > self.max_reward[2]):
-            self.max_reward = transition
-        elif (self.min_reward == []) or (transition[2] < self.min_reward[2]):
-            self.min_reward = transition
-
-    def sample(self, batch_size):
-        sample = random.sample(self.memory, batch_size - 2)
-        sample.append(self.max_reward)
-        sample.append(self.min_reward)
-        return sample
+        # Oldest experiences are discarded. For Ever.
+        # TODO: Check for a more efficient way of cleaning the memory.
+        while len(self.memory) > self.capacity:
+            _ = self.pop()
 
     def __len__(self):
         return len(self.memory)
-
 
 # Add different experience replay methods
+
 
 class CombinedReplayMemory:
 
     def __init__(self, capacity):
         self.capacity = capacity
-        self.memory = deque(maxlen=capacity)
+
+        # It is necessary to use List data structure for dynamic buffer.
+        self.memory = []
+
+    def pop(self, idx=0):
+        # Pop is redefined as taking the oldest element (FIFO) for convinience.
+        return self.memory.pop(idx)
 
     def push(self, transition):
-        # YOUR CODE HERE
+
+        if len(self.memory) >= self.capacity:
+            _ = self.pop()
+
         self.memory.append(transition)
         self.transition = transition
 
+    def memory_full(self):
+        return len(self.memory) >= self.capacity
+
     def sample(self, batch_size):
+
         samples = random.sample(self.memory, batch_size - 1)
         samples.append(self.transition)
         return samples
 
     def __len__(self):
         return len(self.memory)
+
+    def resize_memory(self, new_size=None):
+        """Redefines the size of the buffer.
+        Inputs:
+            new_size (type: int), capacity = new_size."""
+
+        self.capacity = new_size
+
+        # Oldest experiences are discarded. For Ever.
+        # TODO: Check for a more efficient way of cleaning the memory.
+        while len(self.memory) > self.capacity:
+            _ = self.pop()
 
 
 class SumTree:
@@ -81,8 +144,8 @@ class SumTree:
 
     def __init__(self, max_capacity):
         self.capacity = max_capacity
-        self.tree = numpy.zeros(2 * max_capacity - 1)
-        self.data = numpy.zeros(max_capacity, dtype=object)
+        self.tree = np.zeros(2 * max_capacity - 1)
+        self.data = np.zeros(max_capacity, dtype=object)
         self.num = 0
         self.e = 0.01
         self.a = 0.6
@@ -180,15 +243,15 @@ class RankBased:
 
     def get_batch(self, n):
         self._update_priorities()
-        self.total = numpy.sum(self.priorities)
-        self.cum_sum = numpy.cumsum(self.priorities)
+        self.total = np.sum(self.priorities)
+        self.cum_sum = np.cumsum(self.priorities)
 
         batch = []
         priorities = []
 
         # sample hole batch indicies is faster than each individual
-        rands = numpy.random.rand(n) * self.total
-        batch_idx = numpy.searchsorted(self.cum_sum, rands)
+        rands = np.random.rand(n) * self.total
+        batch_idx = np.searchsorted(self.cum_sum, rands)
         # picking transitions one by one is faster than indixing with a list
         for idx in batch_idx:
             batch.append(self.data[idx][2:])
@@ -201,7 +264,7 @@ class RankBased:
 
     def _update_priorities(self):
         # order is inverse of actual position in heap
-        order = numpy.array(range(self.get_len() + 1, 1, -1))
+        order = np.array(range(self.get_len() + 1, 1, -1))
         self.priorities = 1. / order
 
 

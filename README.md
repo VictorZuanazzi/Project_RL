@@ -6,7 +6,7 @@ at the University of Amsterdam.
 ### Contributors
 * [David Speck](https://github.com/Saduras)
 * [Masoumeh Bakhtiariziabari](https://github.com/mbakhtiariz)
-* [Ruth last name](https://github.com/VictorZuanazzi)
+* [Ruth Wijma](https://github.com/rwq)
 * [Victor Zuanazzi](https://github.com/VictorZuanazzi)
 
 ## Dependencies
