@@ -29,9 +29,16 @@ class BufferSizeManager:
         new_td_error = abs(new_td_error)
 
         # update = -1 if new_td_error < self.td_error, then the buffer must decrease;
-        # update = 1 if new_td_error > self.td_error, than the buffer must increase.
-        update = (new_td_error - self.td_error) / \
-            abs(new_td_error - self.td_error)
+        # update = 1 if new_td_error > self.td_error, than the buffer must increase;
+        # update = 0 if new_td_error = self.td_error, buffer size remains constant.
+        delta = new_td_error - self.td_error
+        e = 1e-7
+
+        if abs(delta) < e:
+            # for numeric stability
+            return self.capacity
+
+        update = delta / abs(delta)
 
         # allow for non-linear update (not covered in the method proposed by the paper)
         if abs(self.k) < 1:
