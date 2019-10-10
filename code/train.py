@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from tqdm import tqdm as _tqdm
 from torch.autograd import Variable
-import random, os
+import random
+import os
 
 # ----device-----------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -21,11 +22,10 @@ print(device)
 def tqdm(*args, **kwargs):
     return _tqdm(*args, **kwargs, mininterval=1)
 
-
 # using exponential decay rather than linear decay
 # def get_epsilon(it):
-#     # YOUR CODE HERE
 #     return max(0.01,(-0.95/ARGS.decay_steps)*it + 1)
+
 
 def get_beta(it, total_it, beta0):
     return beta0 + (it / total_it) * (1 - beta0)
@@ -52,10 +52,11 @@ def soft_update(local_model, target_model, tau):
     ======
         local_model (PyTorch model): weights will be copied from
         target_model (PyTorch model): weights will be copied to
-        tau (float): interpolation parameter 
+        tau (float): interpolation parameter
     """
     for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
-        target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
+        target_param.data.copy_(
+            tau * local_param.data + (1.0 - tau) * target_param.data)
 
 
 def compute_q_val(model, state, action):
@@ -72,14 +73,15 @@ def compute_target(model_target, reward, next_state, done, discount_factor):
 
     next_state_values = torch.zeros(done.size()[0]).to(device)
     if not non_terminal_states.nelement() == 0:
-        next_state_values[right_index], _ = model_target(non_terminal_states).max(1)
+        next_state_values[right_index], _ = model_target(
+            non_terminal_states).max(1)
 
     target = reward + discount_factor * next_state_values
 
     return target.detach().unsqueeze(1)
 
-def train(model, model_target, memory, optimizer, batch_size, discount_factor, TAU, iter, beta=None):
 
+def train(model, model_target, memory, optimizer, batch_size, discount_factor, TAU, iter, beta=None):
     # don't learn without some decent experience
     if len(memory) < batch_size:
         return None
@@ -98,7 +100,8 @@ def train(model, model_target, memory, optimizer, batch_size, discount_factor, T
 
     # convert to PyTorch and define types
     state = torch.tensor(state, dtype=torch.float).to(device)
-    action = torch.tensor(action, dtype=torch.int64).to(device)  # Need 64 bit to use them as index
+    action = torch.tensor(action, dtype=torch.int64).to(
+        device)  # Need 64 bit to use them as index
     next_state = torch.tensor(next_state, dtype=torch.float).to(device)
     reward = torch.tensor(reward, dtype=torch.float).to(device)
     done = torch.tensor(done, dtype=torch.uint8).to(device)  # Boolean
@@ -107,7 +110,8 @@ def train(model, model_target, memory, optimizer, batch_size, discount_factor, T
     q_val = compute_q_val(model, state, action)
 
     with torch.no_grad():  # Don't compute gradient info for the target (semi-gradient)
-        target = compute_target(model_target, reward, next_state, done, discount_factor)
+        target = compute_target(model_target, reward,
+                                next_state, done, discount_factor)
 
     if ARGS.replay == 'PER':
         w = (1 / (batch_size * np.array(priorities)) ** beta)
@@ -148,11 +152,10 @@ def main():
               'CombinedReplayMemory': CombinedReplayMemory,
               'PER': PrioritizedReplayMemory}
 
-
     if ARGS.adaptive_buffer:
         # Introduces the buffer manager for the adaptive buffer size.
         manage_memory = BufferSizeManager(initial_capacity=ARGS.buffer,
-                                      size_change=ARGS.buffer_step_size)
+                                          size_change=ARGS.buffer_step_size)
 
     # environment
     env, (input_size, output_size) = get_env(ARGS.env)
@@ -215,7 +218,8 @@ def main():
 
     optimizer = optim.Adam(model.parameters(), ARGS.lr)
 
-    global_steps = 0  # Count the steps (do not reset at episode start, to compute epsilon)
+    # Count the steps (do not reset at episode start, to compute epsilon)
+    global_steps = 0
     episode_durations = []  #
     rewards_per_episode = []
 
@@ -224,7 +228,6 @@ def main():
     # -------------------------------------------------------
 
     for i_episode in tqdm(range(ARGS.num_episodes), ncols=100):
-
         # Sample a transition
         s = env.reset()
         done = False
@@ -233,7 +236,8 @@ def main():
 
         # for debugging purposes:
         if (ARGS.debug_mode):
-            print(f"buffer size: {len(replay)}, r: {episode_durations[-1] if len(episode_durations) >=1 else 0}")
+            print(
+                f"buffer size: {len(replay)}, r: {episode_durations[-1] if len(episode_durations) >=1 else 0}")
 
         render_env_bool = False
         if (ARGS.render_env > 0) and not (i_episode % ARGS.render_env):
@@ -253,21 +257,29 @@ def main():
             beta = None
 
             # The TD-error is necessary if replay == PER OR if we are using adaptive buffer and the memory is full
-            get_td_error = (ARGS.replay == 'PER') or (ARGS.adaptive_buffer and replay.memory_full())
+            get_td_error = (ARGS.replay == 'PER') or (
+                ARGS.adaptive_buffer and replay.memory_full())
 
             if get_td_error:
-                state = torch.tensor(s, dtype=torch.float).to(device).unsqueeze(0)
-                action = torch.tensor(a, dtype=torch.int64).to(device).unsqueeze(0)  # Need 64 bit to use them as index
-                next_state = torch.tensor(s_next, dtype=torch.float).to(device).unsqueeze(0)
-                reward = torch.tensor(r, dtype=torch.float).to(device).unsqueeze(0)
-                done_ = torch.tensor(done, dtype=torch.uint8).to(device).unsqueeze(0)
+                state = torch.tensor(s, dtype=torch.float).to(
+                    device).unsqueeze(0)
+                action = torch.tensor(a, dtype=torch.int64).to(
+                    device).unsqueeze(0)  # Need 64 bit to use them as index
+                next_state = torch.tensor(
+                    s_next, dtype=torch.float).to(device).unsqueeze(0)
+                reward = torch.tensor(r, dtype=torch.float).to(
+                    device).unsqueeze(0)
+                done_ = torch.tensor(done, dtype=torch.uint8).to(
+                    device).unsqueeze(0)
                 with torch.no_grad():
                     q_val = compute_q_val(model, state, action)
-                    target = compute_target(model_target, reward, next_state, done_, ARGS.discount_factor)
+                    target = compute_target(
+                        model_target, reward, next_state, done_, ARGS.discount_factor)
                 td_error = F.smooth_l1_loss(q_val, target)
 
                 if ARGS.adaptive_buffer and replay.memory_full():
-                    new_buffer_size = manage_memory.update_memory_size(td_error.item())
+                    new_buffer_size = manage_memory.update_memory_size(
+                        td_error.item())
                     replay.resize_memory(new_buffer_size)
 
             if ARGS.replay == 'PER':
@@ -306,7 +318,8 @@ def main():
         fd = open(fd_name, "a")
 
         if i_episode % 100 == 0:
-            print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
+            print('\rEpisode {}\tAverage Score: {:.2f}'.format(
+                i_episode, np.mean(scores_window)))
         # if np.mean(scores_window)>=200.0:
         #     print('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(i_episode-100, np.mean(scores_window)))
         # break
@@ -352,7 +365,8 @@ def get_action(state, model):
 
 def evaluate():
     if ARGS.replay == 'PER':
-        filename = 'weights_' + str(ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_.pt'
+        filename = 'weights_' + str(ARGS.replay) + \
+            '_' + ARGS.pmethod + '_' + ARGS.env + '_.pt'
     else:
         filename = 'weights_' + str(ARGS.replay) + '_' + ARGS.env + '_.pt'
 
@@ -369,7 +383,8 @@ def evaluate():
     if os.path.isfile(filename):
         print(f"Loading weights from {filename}")
         # weights = torch.load(filename)
-        weights = torch.load(filename, map_location=lambda storage, loc: storage)
+        weights = torch.load(
+            filename, map_location=lambda storage, loc: storage)
         model.load_state_dict(weights['policy'])
     else:
         print("Please train the model or provide the saved 'weights.pt' file")
@@ -414,7 +429,7 @@ if __name__ == "__main__":
                         help='dimensionality of hidden space')
     parser.add_argument('--lr', default=5e-4, type=float)
     parser.add_argument('--discount_factor', default=0.8, type=float)
-    parser.add_argument('--replay', default='PER', type=str, choices=['CombinedReplayMemory', \
+    parser.add_argument('--replay', default='PER', type=str, choices=['CombinedReplayMemory',
                                                                       'NaiveReplayMemory', 'PER'],
                         help='type of experience replay')
     parser.add_argument('--env', default='CartPole-v1', type=str,
@@ -426,15 +441,16 @@ if __name__ == "__main__":
                         help="chose from constant (static) and dynamic (adaptive) buffer size.")
 
     parser.add_argument('--beta0', default=0.4, type=float)
-    parser.add_argument('--pmethod', type=str, choices=['prop', 'rank'], default='prop', \
+    parser.add_argument('--pmethod', type=str, choices=['prop', 'rank'], default='prop',
                         help='proritized reply method: {prop or rank}')
-    parser.add_argument('--TAU', default=1e-3, type=float, \
+    parser.add_argument('--TAU', default=1e-3, type=float,
                         help='parameter for soft update of weight; set it to one for hard update')
     parser.add_argument('--EPS', default='1.0', type=float,
                         help='epsilon')
     parser.add_argument('--eps_decay', default=.995, type=float,
                         help='decay constant')
-    parser.add_argument('--update_freq', default=500, help='Update frequence in steps of target network parametes')
+    parser.add_argument('--update_freq', default=500,
+                        help='Update frequence in steps of target network parametes')
     parser.add_argument('--norm', default='True', type=bool,
                         help="weight normalization: {True, False}")
     parser.add_argument('--render_env', default=0, type=int,

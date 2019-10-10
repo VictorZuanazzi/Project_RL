@@ -3,6 +3,9 @@ from collections import deque
 from environment import get_env
 import numpy as np
 
+import heapq
+from itertools import count
+
 
 class BufferSizeManager:
     def __init__(self, initial_capacity, size_change=20):
@@ -27,7 +30,8 @@ class BufferSizeManager:
 
         # update = -1 if new_td_error < self.td_error, then the buffer must decrease;
         # update = 1 if new_td_error > self.td_error, than the buffer must increase.
-        update = (new_td_error - self.td_error) / abs(new_td_error - self.td_error)
+        update = (new_td_error - self.td_error) / \
+            abs(new_td_error - self.td_error)
 
         # allow for non-linear update (not covered in the method proposed by the paper)
         if abs(self.k) < 1:
@@ -44,6 +48,7 @@ class BufferSizeManager:
         return self.capacity
 
 # TODO: Combined can inherit Naive and overwrite what is necessary. To avoid copy paste bugs.
+
 
 class NaiveReplayMemory:
 
@@ -86,6 +91,7 @@ class NaiveReplayMemory:
         return len(self.memory)
 
 # Add different experience replay methods
+
 
 class CombinedReplayMemory:
 
@@ -221,59 +227,49 @@ class SumTree:
 class RankBased:
     def __init__(self, max_capacity):
         self.capacity = max_capacity
-        self.data = deque(maxlen=max_capacity)
+        self.data = []
         self.priorities = None
         self.total = None
         self.cum_sum = None
-        self.update_flag = False
-        self.mod = 8
-        self.samples_seen = 0
-        self.aux = deque(maxlen=max_capacity)
+        self.tiebreaker = count()
 
     def add(self, error, data):
-        self.samples_seen += 1
-        self.aux.append(list(data) + [error])
-        if self.samples_seen % self.mod == 0:
-            self.data.extend(self.aux)
-            self.aux.clear()
-            self.update_flag = True
-            self.mod = min(10000, self.mod * 2)
+        # use tie breaker for transitions with equal error
+        data = (error, next(self.tiebreaker), *data)
+        heapq.heappush(self.data, data)
+
+        if len(self.data) > self.capacity:
+            oldest_idx = min(enumerate(self.data), key=lambda d: d[1][1])[0]
+            del self.data[oldest_idx]
 
     def update(self, idx, error):
-        self.data[idx][-1] = error
-
-    def _get_single(self):
-        rand = random.uniform(0, self.total)
-        index = np.searchsorted(self.cum_sum, rand)
-        return index, self.priorities[index], self.data[index][:-1]  # to exclude the error at the end
+        self.data[idx] = (error, *self.data[idx][1:])
 
     def get_batch(self, n):
-        if self.update_flag or self.priorities is None:
-            self._update_priorities()
+        self._update_priorities()
         self.total = np.sum(self.priorities)
         self.cum_sum = np.cumsum(self.priorities)
-        batch_idx = []
+
         batch = []
         priorities = []
 
-        for i in range(n):
-            (idx, p, data) = self._get_single()
-            batch.append(data)
-            batch_idx.append(idx)
-            priorities.append(p)
+        # sample hole batch indicies is faster than each individual
+        rands = np.random.rand(n) * self.total
+        batch_idx = np.searchsorted(self.cum_sum, rands)
+        # picking transitions one by one is faster than indixing with a list
+        for idx in batch_idx:
+            batch.append(self.data[idx][2:])
+            priorities.append(self.priorities[idx])
+
         return batch, batch_idx, priorities
 
     def get_len(self):
         return len(self.data)
 
     def _update_priorities(self):
-        length = self.get_len()
-        errors = np.array([data[-1] for data in self.data])
-        order = np.argsort(errors)
-        order = np.array([order[order[x]] for x in range(length)])
-        order = length - order
+        # order is inverse of actual position in heap
+        order = np.array(range(self.get_len() + 1, 1, -1))
         self.priorities = 1. / order
-        self.update_flag = False
 
 
 class PrioritizedReplayMemory:  # stored as ( s, a, r, s_ ) in SumTree
@@ -303,7 +299,8 @@ class PrioritizedReplayMemory:  # stored as ( s, a, r, s_ ) in SumTree
 # sanity check
 if __name__ == "__main__":
     capacity = 10
-    memory = PrioritizedReplayMemory(capacity)  # CombinedReplayMemory(capacity)#NaiveReplayMemory(capacity)
+    # CombinedReplayMemory(capacity)#NaiveReplayMemory(capacity)
+    memory = PrioritizedReplayMemory(capacity)
 
     env, _ = get_env("Acrobot-v1")
 

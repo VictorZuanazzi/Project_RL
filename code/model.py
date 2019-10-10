@@ -5,9 +5,11 @@ import torch.nn.functional as F
 from torch import optim
 from environment import get_env
 
-#Naive implementation
+# Naive implementation
+
+
 class MountainNetwork(nn.Module):
-    
+
     def __init__(self, input_size, output_size, num_hidden=128):
         nn.Module.__init__(self)
         self.l1 = nn.Linear(input_size, num_hidden)
@@ -16,13 +18,12 @@ class MountainNetwork(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        
-        # YOUR CODE HERE
         out = self.relu(self.l1(x))
         out = self.relu(self.l2(out))
         out = self.l3(out)
-        
+
         return out
+
 
 class CartNetwork(nn.Module):
 
@@ -33,12 +34,11 @@ class CartNetwork(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        
-        # YOUR CODE HERE
         out = self.relu(self.l1(x))
         out = self.l2(out)
-        
+
         return out
+
 
 class LanderNetwork(nn.Module):
     def __init__(self, state_size, action_size, seed, fc1_units=64, fc2_units=64):
@@ -49,17 +49,15 @@ class LanderNetwork(nn.Module):
         self.fc3 = nn.Linear(fc2_units, action_size)
 
     def forward(self, state):
-        
+
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
         return self.fc3(x)
 
-#TODO: implement a network based on obeservation. Also use CNNs
+# TODO: implement a network based on obeservation. Also use CNNs
 
 
-
-
-if __name__=="__main__":
+if __name__ == "__main__":
     # Let's instantiate and test if it works
     num_hidden = 128
     torch.manual_seed(1234)
@@ -74,8 +72,8 @@ if __name__=="__main__":
 
     torch.manual_seed(1234)
     test_model = nn.Sequential(
-        nn.Linear(input_size, num_hidden), 
-        nn.ReLU(), 
+        nn.Linear(input_size, num_hidden),
+        nn.ReLU(),
         nn.Linear(num_hidden, output_size)
     )
 
