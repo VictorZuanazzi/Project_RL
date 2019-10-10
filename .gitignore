@@ -6,3 +6,5 @@ code/__pycache__/*
 images/
 results/
 .idea/
+
+code/replay_mod.py
