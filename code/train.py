@@ -220,8 +220,9 @@ def main():
 
     # Count the steps (do not reset at episode start, to compute epsilon)
     global_steps = 0
-    episode_durations = []  #
+    episode_durations = []
     rewards_per_episode = []
+    buffer_sizes = []
 
     scores_window = deque(maxlen=100)
     eps = ARGS.EPS
@@ -233,11 +234,12 @@ def main():
         done = False
         epi_duration = 0
         r_sum = 0
+        buffer_sizes.append(len(replay))
 
         # for debugging purposes:
         if (ARGS.debug_mode):
-            print(
-                f"buffer size: {len(replay)}, r: {episode_durations[-1] if len(episode_durations) >=1 else 0}")
+            print(f"buffer size: {len(replay)}, r: {episode_durations[-1] if len(episode_durations) >=1 else 0}")
+
 
         render_env_bool = False
         if (ARGS.render_env > 0) and not (i_episode % ARGS.render_env):
@@ -257,8 +259,7 @@ def main():
             beta = None
 
             # The TD-error is necessary if replay == PER OR if we are using adaptive buffer and the memory is full
-            get_td_error = (ARGS.replay == 'PER') or (
-                ARGS.adaptive_buffer and replay.memory_full())
+            get_td_error = (ARGS.replay == 'PER') or (ARGS.adaptive_buffer and replay.memory_full())
 
             if get_td_error:
                 state = torch.tensor(s, dtype=torch.float).to(
@@ -334,8 +335,13 @@ def main():
     # close files
     fd.close()
     fr.close()
-
     env.close()
+
+    # TODO: save all stats in numpy (pickle)
+    b_name = "results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        ARGS.pmethod) + '_' + ARGS.env + "_buffers_sizes_" + str(ARGS.seed_value)
+    np.save(b_name, buffer_sizes)
+
 
     print(f"max episode duration {max(episode_durations)}")
     print(f"Saving weights to {filename}")
