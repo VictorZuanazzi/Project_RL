@@ -64,7 +64,7 @@ class NaiveReplayMemory:
 
     def push(self, transition):
 
-        if len(self.memory) >= self.capacity:
+        while len(self.memory) >= self.capacity:
             _ = self.pop()
 
         self.memory.append(transition)
@@ -79,10 +79,11 @@ class NaiveReplayMemory:
 
         self.capacity = new_size
 
-        # Oldest experiences are discarded. For Ever.
-        # TODO: Check for a more efficient way of cleaning the memory.
-        while len(self.memory) > self.capacity:
-            _ = self.pop()
+        # self.push() takes care of decreasing the memory.
+        # # Oldest experiences are discarded. For Ever.
+        # # TODO: Check for a more efficient way of cleaning the memory.
+        # while len(self.memory) > self.capacity:
+        #     _ = self.pop()
 
     def __len__(self):
         return len(self.memory)
@@ -94,7 +95,7 @@ class CombinedReplayMemory(NaiveReplayMemory):
 
     def push(self, transition):
 
-        if len(self.memory) >= self.capacity:
+        while len(self.memory) >= self.capacity:
             _ = self.pop()
 
         self.memory.append(transition)
@@ -208,14 +209,19 @@ class RankBased:
         self.cum_sum = None
         self.tiebreaker = count()
 
+    def memory_full(self):
+        return len(self.data) >= self.capacity
+
     def add(self, error, data):
+
+        # check if there is space left in memory
+        while self.memory_full():
+            oldest_idx = min(enumerate(self.data), key=lambda d: d[1][1])[0]
+            del self.data[oldest_idx]
+
         # use tie breaker for transitions with equal error
         data = (error, next(self.tiebreaker), *data)
         heapq.heappush(self.data, data)
-
-        if len(self.data) > self.capacity:
-            oldest_idx = min(enumerate(self.data), key=lambda d: d[1][1])[0]
-            del self.data[oldest_idx]
 
     def update(self, idx, error):
         self.data[idx] = (error, *self.data[idx][1:])
@@ -247,7 +253,8 @@ class RankBased:
         self.priorities = 1. / order
 
 
-class PrioritizedReplayMemory:  # stored as ( s, a, r, s_ ) in SumTree
+class PrioritizedReplayMemory:
+    # stored as ( s, a, r, s_ ) in SumTree
     # modified https://github.com/wotmd5731/dqn/blob/master/memory.py
 
     def __init__(self, max_capacity, method="prop"):
@@ -258,6 +265,9 @@ class PrioritizedReplayMemory:  # stored as ( s, a, r, s_ ) in SumTree
         else:
             raise ValueError("Bad replay method")
 
+    def memory_full(self):
+        return self.container.memory_full()
+
     def push(self, error, sample):
         self.container.add(error, sample)
 
@@ -266,6 +276,13 @@ class PrioritizedReplayMemory:  # stored as ( s, a, r, s_ ) in SumTree
 
     def update(self, idx, error):
         self.container.update(idx, error)
+
+    def resize_memory(self, new_size=None):
+        """Redefines the size of the buffer.
+        Inputs:
+            new_size (type: int), capacity = new_size."""
+
+        self.container.capacity = new_size
 
     def __len__(self):
         return self.container.get_len()
