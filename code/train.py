@@ -442,9 +442,6 @@ if __name__ == "__main__":
                         help='environments you want to evaluate')
     parser.add_argument('--buffer', default='10000', type=int,
                         help='buffer size for experience replay')
-    parser.add_argument('--buffer_type', default="static", type=str,
-                        choices=['static', 'adaptive'],
-                        help="chose from constant (static) and dynamic (adaptive) buffer size.")
 
     parser.add_argument('--beta0', default=0.4, type=float)
     parser.add_argument('--pmethod', type=str, choices=['prop', 'rank'], default='prop',
