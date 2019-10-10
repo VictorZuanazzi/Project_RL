@@ -47,9 +47,6 @@ class BufferSizeManager:
 
         return self.capacity
 
-# TODO: Combined can inherit Naive and overwrite what is necessary. To avoid copy paste bugs.
-
-
 class NaiveReplayMemory:
 
     def __init__(self, capacity):
@@ -93,17 +90,7 @@ class NaiveReplayMemory:
 # Add different experience replay methods
 
 
-class CombinedReplayMemory:
-
-    def __init__(self, capacity):
-        self.capacity = capacity
-
-        # It is necessary to use List data structure for dynamic buffer.
-        self.memory = []
-
-    def pop(self, idx=0):
-        # Pop is redefined as taking the oldest element (FIFO) for convinience.
-        return self.memory.pop(idx)
+class CombinedReplayMemory(NaiveReplayMemory):
 
     def push(self, transition):
 
@@ -111,31 +98,13 @@ class CombinedReplayMemory:
             _ = self.pop()
 
         self.memory.append(transition)
-        self.transition = transition
-
-    def memory_full(self):
-        return len(self.memory) >= self.capacity
+        self.last_transition = transition
 
     def sample(self, batch_size):
 
         samples = random.sample(self.memory, batch_size - 1)
-        samples.append(self.transition)
+        samples.append(self.last_transition)
         return samples
-
-    def __len__(self):
-        return len(self.memory)
-
-    def resize_memory(self, new_size=None):
-        """Redefines the size of the buffer.
-        Inputs:
-            new_size (type: int), capacity = new_size."""
-
-        self.capacity = new_size
-
-        # Oldest experiences are discarded. For Ever.
-        # TODO: Check for a more efficient way of cleaning the memory.
-        while len(self.memory) > self.capacity:
-            _ = self.pop()
 
 
 class SumTree:
@@ -183,7 +152,13 @@ class SumTree:
         idx = self.write + self.capacity - 1
 
         self.data[self.write] = data
-        self.update(idx, p)
+
+        # (Victor) I think that is a bug:
+        # self.update(idx, p)
+
+        # (Victor) I think that is what was meant in the first place:
+
+        self.update(idx, error)
 
         self.write += 1
         if self.write >= self.capacity:
