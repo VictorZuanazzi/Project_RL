@@ -238,6 +238,10 @@ class RankBased:
         data = (error, next(self.tiebreaker), *data)
         heapq.heappush(self.data, data)
 
+        if len(self.data) > self.capacity:
+            oldest_idx = min(enumerate(self.data), key=lambda d: d[1][1])[0]
+            del self.data[oldest_idx]
+
     def update(self, idx, error):
         self.data[idx] = (error, *self.data[idx][1:])
 
