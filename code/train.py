@@ -228,7 +228,7 @@ def main():
     eps = ARGS.EPS
     # -------------------------------------------------------
 
-    for i_episode in tqdm(range(ARGS.num_episodes), ncols=100):
+    for i_episode in tqdm(range(ARGS.num_episodes), ncols=50):
         # Sample a transition
         s = env.reset()
         done = False
