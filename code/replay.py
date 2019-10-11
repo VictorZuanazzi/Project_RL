@@ -128,10 +128,7 @@ class SumTree:
         self.a = 0.6
 
     def _get_priority(self, error):
-        if error >= 0:
-            return (error + self.e) ** self.a
-        else:
-            return self._total()
+        return (error + self.e) ** self.a
 
     def _propagate(self, idx, change):
         parent = (idx - 1) // 2
@@ -156,15 +153,9 @@ class SumTree:
         return self.tree[0]
 
     def add(self, error, data):
-        p = self._get_priority(error)
         idx = self.write + self.capacity - 1
 
         self.data[self.write] = data
-
-        # (Victor) I think that is a bug:
-        # self.update(idx, p)
-
-        # (Victor) I think that is what was meant in the first place:
 
         self.update(idx, error)
 
