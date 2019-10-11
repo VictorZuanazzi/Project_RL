@@ -284,7 +284,7 @@ def main():
                     replay.resize_memory(new_buffer_size)
 
             if ARGS.replay == 'PER':
-                replay.push(td_error, (s, a, r, s_next, done))
+                replay.push(abs(td_error), (s, a, r, s_next, done))
                 beta = get_beta(i_episode, ARGS.num_episodes, ARGS.beta0)
             else:
                 replay.push((s, a, r, s_next, done))
