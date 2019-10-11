@@ -159,7 +159,7 @@ def main():
 
     # environment
     env, (input_size, output_size) = get_env(ARGS.env)
-    # env.seed(seed_value)
+    env.seed(ARGS.seed_value)
 
     network = {'CartPole-v1': CartNetwork(input_size, output_size, ARGS.num_hidden).to(device),
                'MountainCar-v0': MountainNetwork(input_size, output_size, ARGS.num_hidden).to(device),
