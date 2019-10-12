@@ -25,8 +25,12 @@ python code/train.py --num_episodes 1000 --batch_size 64 --num_hidden 64 --lr 5e
 
 
 ## plotting:
+```
 cd code
+
 #### generating the mean and std stats:
 python plot.py 
 #### generating plots:
 python plot.py --common
+
+```
