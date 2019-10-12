@@ -482,8 +482,10 @@ if __name__ == "__main__":
         os.mkdir(env_path)
 
     replay_path = env_path + "/" + str(ARGS.replay)
+    if ARGS.adaptive_buffer:
+        replay_path = replay_path + '-' + 'adapt'
     if ARGS.replay == 'PER':
-        replay_path = replay_path + str(ARGS.pmethod)
+        replay_path = replay_path + '-' + str(ARGS.pmethod)
     if not os.path.exists(replay_path):
         os.mkdir(replay_path)
 
