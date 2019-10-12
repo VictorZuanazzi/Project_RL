@@ -41,7 +41,7 @@ please upload the results in the root path with this hierarchy:
 │   │   ├── CombinedReplayMemory-adapt# Replay Type. 
 │   │   ├── NaiveReplayMemory-adapt   # Replay Type. 
 │   │   ├── PER-adapt-rank            # Replay Type. 
-│   │   └── PER-PER-prop              # Replay Type. 
+│   │   └── PER-prop                  # Replay Type. 
 │   ├── LunarLander-v2                # Environment name. It should be same as what is defined in train.py
 │   ├── MountainCar-v0                # Environment name. It should be same as what is defined in train.py
 │   └── plots                         # This automaticaly is generated while ploting.
