@@ -26,13 +26,24 @@ def plot_data(env_type, data_mean, data_std,title, color,label='',y_label=''):
     data_y_plus = smooth(data_mean+data_std)
     data_y_minus = smooth(data_mean-data_std)
 
+    plt.rcParams["figure.figsize"] = (50,20)
     plt.plot(smooth(data_mean),color=color, label=label)
     plt.fill_between(data_x,data_y_plus,data_y_minus,color=color,alpha=0.2)
     plt.xlabel('Episodes ['+ env_type + ']')
     plt.ylabel(y_label)
     plt.title(title)
     plt.grid()
-    plt.legend()
+    # from matplotlib.font_manager import FontProperties
+    #
+    # fontP = FontProperties()
+    # fontP.set_size('small')
+    # plt.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0, prop=fontP)
+    # plt.tight_layout(rect=[0, 0, 0.75, 1])
+
+    plt.legend(shadow=True)
+    # plt.tight_layout()
+    # plt.subplots_adjust(right=0.75)
+
 
 def read_files(path, plot_type):
 
@@ -138,7 +149,6 @@ def plot_comb_experiments( env_type, env_path, parent_path):
         for fol in folders:
             stats_path = env_path + '/' + fol + '/stats/'
             files = os.listdir(stats_path)
-            # TODO: Currently two legends appear in the second graph. Need to verify if introducing plt.close() solves this.
             for f in files:
                 f = stats_path + f
                 if 'rewards' in f:
