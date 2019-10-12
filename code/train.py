@@ -28,6 +28,7 @@ def tqdm(*args, **kwargs):
 
 
 def get_beta(it, total_it, beta0):
+    # importance-sampling, from initial value increasing to 1
     return beta0 + (it / total_it) * (1 - beta0)
 
 

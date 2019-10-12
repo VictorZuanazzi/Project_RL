@@ -122,10 +122,14 @@ class SumTree:
     def __init__(self, max_capacity):
         self.capacity = max_capacity
         self.tree = np.zeros(2 * max_capacity - 1)
-        self.data = np.zeros(max_capacity, dtype=object)
+        # [--------------Parent nodes-------------][-------leaves to recode priority-------]
+        #             size: capacity - 1                       size: capacity
+        self.data = np.zeros(max_capacity, dtype=object) # for all transitions
+        # [--------------data frame-------------]
+        #             size: capacity
         self.num = 0
-        self.e = 0.01
-        self.a = 0.6
+        self.e = 0.01 # small amount to avoid zero priority
+        self.a = 0.6 # [0~1] convert the importance of TD error to priority
 
     def _get_priority(self, error):
         return (error + self.e) ** self.a
@@ -147,29 +151,40 @@ class SumTree:
             self._propagate(parent)
 
     def _retrieve(self, idx, rand):
+        """
+        Tree structure and array storage:
+        Tree index:
+             0         -> storing priority sum
+            / \
+          1     2
+         / \   / \
+        3   4 5   6    -> storing priority for transitions
+        Array type for storing:
+        [0,1,2,3,4,5,6]
+        """
         left = 2 * idx + 1
         right = left + 1
 
-        if left >= len(self.tree):
+        if left >= len(self.tree):  # end search when no more child
             return idx
 
-        if rand <= self.tree[left]:
+        if rand <= self.tree[left]: # downward search, always search for a higher priority node
             return self._retrieve(left, rand)
         else:
             return self._retrieve(right, rand - self.tree[left])
 
     def _total(self):
-        return self.tree[0]
+        return self.tree[0] # the root
 
     def add(self, error, data):
         idx = self.write + self.capacity - 1
 
-        self.data[self.write] = data
+        self.data[self.write] = data # update data_frame
 
-        self.update(idx, error)
+        self.update(idx, error) # update tree_frame
 
         self.write += 1
-        if self.write >= self.capacity:
+        if self.write >= self.capacity: # replace when exceed the capacity
             self.write = 0
         if self.num < self.capacity:
             self.num += 1
@@ -183,7 +198,7 @@ class SumTree:
 
     def _get_single(self, a, b, rand):
         #rand = random.uniform(a, b)
-        idx = self._retrieve(0, rand)
+        idx = self._retrieve(0, rand) # search the max leaf priority based on the lower_bound (rand here)
         data_idx = idx - self.capacity + 1
         return idx, self.tree[idx], self.data[data_idx]
 
