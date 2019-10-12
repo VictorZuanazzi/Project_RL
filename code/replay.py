@@ -130,12 +130,21 @@ class SumTree:
     def _get_priority(self, error):
         return (error + self.e) ** self.a
 
-    def _propagate(self, idx, change):
+    def _propagate_old(self, idx, change):
         parent = (idx - 1) // 2
         self.tree[parent] += change
 
         if parent != 0:
             self._propagate(parent, change)
+
+    def _propagate(self, idx):
+        parent = (idx - 1) // 2
+        left = parent * 2 + 1
+        right = parent * 2 + 2
+        self.tree[parent] = self.tree[right] + self.tree[left]
+
+        if parent != 0:
+            self._propagate(parent)
 
     def _retrieve(self, idx, rand):
         left = 2 * idx + 1
@@ -167,13 +176,13 @@ class SumTree:
 
     def update(self, idx, error):
         p = self._get_priority(error)
-        change = p - self.tree[idx]
+        # change = p - self.tree[idx]
 
         self.tree[idx] = p
-        self._propagate(idx, change)
+        self._propagate(idx)
 
-    def _get_single(self, a, b):
-        rand = random.uniform(a, b)
+    def _get_single(self, a, b, rand):
+        #rand = random.uniform(a, b)
         idx = self._retrieve(0, rand)
         data_idx = idx - self.capacity + 1
         return idx, self.tree[idx], self.data[data_idx]
@@ -188,10 +197,15 @@ class SumTree:
         for i in range(n):
             a = segment * i
             b = segment * (i + 1)
-            (idx, p, data) = self._get_single(a, b)
+            rand = random.uniform(a, b)
+            (idx, p, data) = self._get_single(a, b, rand)
+            if data == 0:
+                (idx, p, data) = self._get_single(a, b, rand)
             batch.append(data)
             batch_idx.append(idx)
             priorities.append(p)
+        if batch[63] == 0:
+            batch = batch
         return batch, batch_idx, priorities
 
     def get_len(self):
