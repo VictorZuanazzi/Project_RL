@@ -25,7 +25,7 @@ python code/train.py --num_episodes 1000 --batch_size 64 --num_hidden 64 --lr 5e
 
 
 ## plotting:
-
+```
 please upload the results in the root path with this hierarchy:
 .
 ├── ...
@@ -46,7 +46,7 @@ please upload the results in the root path with this hierarchy:
 │   ├── MountainCar-v0                # Environment name. It should be same as what is defined in train.py
 │   └── plots                         # This automaticaly is generated while ploting.
 └── ...
-
+```
 
 ```
 cd code
