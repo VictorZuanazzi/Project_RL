@@ -35,6 +35,12 @@ We mainly experimented with three experience replays techniques which are:
   + Adaptive rank PER
 
 ```
+# TODOs
+```
+1) add without memory exps as baseline
+2) experiment on effect of various BATCH SIZEs on each method
+3) experiment on effect of various BUFFER SIZEs on each method
+```
 
 * [Code](code/)
 * [Poster presentation](Poster.pdf)
