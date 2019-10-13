@@ -28,6 +28,7 @@ def tqdm(*args, **kwargs):
 
 
 def get_beta(it, total_it, beta0):
+    # importance-sampling, from initial value increasing to 1
     return beta0 + (it / total_it) * (1 - beta0)
 
 
@@ -167,37 +168,37 @@ def main():
 
     # create new file to store durations
     i = 0
-    fd_name = "results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+    fd_name = results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
         ARGS.pmethod) + '_' + ARGS.env + "_durations0.txt"
     exists = os.path.isfile(fd_name)
     while exists:
         i += 1
-        fd_name = "results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        fd_name = results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
             ARGS.pmethod) + '_' + ARGS.env + "_durations%d.txt" % i
         exists = os.path.isfile(fd_name)
     fd = open(fd_name, "w+")
 
     # create new file to store rewards
     i = 0
-    fr_name = "results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+    fr_name = results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
         ARGS.pmethod) + '_' + ARGS.env + "_rewards0.txt"
     exists = os.path.isfile(fr_name)
     while exists:
         i += 1
-        fr_name = "results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        fr_name = results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
             ARGS.pmethod) + '_' + ARGS.env + "_rewards%d.txt" % i
         exists = os.path.isfile(fr_name)
     fr = open(fr_name, "w+")
 
     # Save experiment hyperparams
     i = 0
-    exists = os.path.isfile("results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+    exists = os.path.isfile(results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
         ARGS.pmethod) + '_' + ARGS.env + "_info0.txt")
     while exists:
         i += 1
-        exists = os.path.isfile("results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        exists = os.path.isfile(results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
             ARGS.pmethod) + '_' + ARGS.env + "_info%d.txt" % i)
-    fi = open("results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+    fi = open(results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
         ARGS.pmethod) + '_' + ARGS.env + "_info%d.txt" % i, "w+")
     file_counter = i
     fi.write(str(ARGS))
@@ -206,12 +207,12 @@ def main():
     # -----------initialization---------------
     if ARGS.replay == 'PER':
         replay = memory[ARGS.replay](ARGS.buffer, ARGS.pmethod)
-        filename = "results/" + str(ARGS.buffer) + "_" + 'weights_' + str(
-            ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + "_%d.pt" % file_counter  # +'_.pt'
+        filename = results_path + "/" + str(ARGS.buffer) + "_" + 'weights_' + str(
+            ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + "_%d.pt" % ARGS.seed_value#file_counter  # +'_.pt'
     else:
         replay = memory[ARGS.replay](ARGS.buffer)
-        filename = "results/" + str(ARGS.buffer) + "_" + 'weights_' + str(
-            ARGS.replay) + '_' + ARGS.env + "_%d.pt" % file_counter  # +'_.pt'
+        filename = results_path + "/" + str(ARGS.buffer) + "_" + 'weights_' + str(
+            ARGS.replay) + '_' + ARGS.env + "_%d.pt" % ARGS.seed_value#file_counter  # +'_.pt'
 
     model = network[ARGS.env]  # local network
     model_target = network[ARGS.env]  # target_network
@@ -284,7 +285,7 @@ def main():
                     replay.resize_memory(new_buffer_size)
 
             if ARGS.replay == 'PER':
-                replay.push(td_error, (s, a, r, s_next, done))
+                replay.push(abs(td_error), (s, a, r, s_next, done))
                 beta = get_beta(i_episode, ARGS.num_episodes, ARGS.beta0)
             else:
                 replay.push((s, a, r, s_next, done))
@@ -338,7 +339,7 @@ def main():
     env.close()
 
     # TODO: save all stats in numpy (pickle)
-    b_name = "results/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+    b_name = results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
         ARGS.pmethod) + '_' + ARGS.env + "_buffers_sizes_" + str(ARGS.seed_value)
     np.save(b_name, buffer_sizes)
 
@@ -354,14 +355,14 @@ def main():
     plt.plot(smooth(episode_durations, 10))
     plt.title('Episode durations per episode')
     # plt.show()
-    plt.savefig("images/" + str(ARGS.buffer) + "_" + str(
-        ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_Episode' + "%d.png" % file_counter)
+    plt.savefig(images_path + "/" + str(ARGS.buffer) + "_" + str(
+        ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_Episode' + "%d.png" % ARGS.seed_value)# file_counter)
 
     plt.plot(smooth(rewards_per_episode, 10))
     plt.title("Rewards per episode")
     # plt.show()
-    plt.savefig("images/" + str(ARGS.buffer) + "_" + str(
-        ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_Rewards' + "%d.png" % file_counter)
+    plt.savefig(images_path + "/" + str(ARGS.buffer) + "_" + str(
+        ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_Rewards' + "%d.png" % ARGS.seed_value) #file_counter)
     return episode_durations
 
 
@@ -371,10 +372,10 @@ def get_action(state, model):
 
 def evaluate():
     if ARGS.replay == 'PER':
-        filename = 'weights_' + str(ARGS.replay) + \
+        filename = results_path + "/" + 'weights_' + str(ARGS.replay) + \
             '_' + ARGS.pmethod + '_' + ARGS.env + '_.pt'
     else:
-        filename = 'weights_' + str(ARGS.replay) + '_' + ARGS.env + '_.pt'
+        filename = results_path + "/" + 'weights_' + str(ARGS.replay) + '_' + ARGS.env + '_.pt'
 
     env, (input_size, output_size) = get_env(ARGS.env)
     # set env seed
@@ -418,13 +419,7 @@ def evaluate():
 
 if __name__ == "__main__":
 
-    path = "images"
-    if not os.path.exists(path):
-        os.mkdir(path)
 
-    path2 = "results"
-    if not os.path.exists(path2):
-        os.mkdir(path2)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_episodes', default=1000, type=int,
@@ -477,6 +472,32 @@ if __name__ == "__main__":
     # ----------------------------
 
     print(ARGS)
+
+    parent_path = "ER_results"
+    if not os.path.exists(parent_path):
+        os.mkdir(parent_path)
+
+    env_path = parent_path + "/" + str(ARGS.env)
+    if not os.path.exists(env_path):
+        os.mkdir(env_path)
+
+    replay_path = env_path + "/" + str(ARGS.replay)
+    if ARGS.adaptive_buffer:
+        replay_path = replay_path + '-' + 'adapt'
+    if ARGS.replay == 'PER':
+        replay_path = replay_path + '-' + str(ARGS.pmethod)
+    if not os.path.exists(replay_path):
+        os.mkdir(replay_path)
+
+    images_path = replay_path + "/" + "images"
+    if not os.path.exists(images_path):
+        os.mkdir(images_path)
+
+    results_path = replay_path + "/" + "results"
+    if not os.path.exists(results_path):
+        os.mkdir(results_path)
+
+    print(results_path)
     main()
     # evaluate()
 
