@@ -23,9 +23,17 @@ There are different types of experience replay, e.g. prioritized experience repl
 ## Experience Replays
 We mainly experimented with three experience replays techniques which are:
 ```
+- Without Experience Replay (TODO) 
 - Naive Experience Replay 
 - Prioritized Experience Replay
+    + rank base
+    + proportion base
 - Combined Experience Replay
+- Adaptive Experience Replay 
+  + Adaptive ER
+  + Adaptive CER
+  + Adaptive rank PER
+
 ```
 
 * [Code](code/)
