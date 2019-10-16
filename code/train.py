@@ -22,6 +22,7 @@ print(device)
 def tqdm(*args, **kwargs):
     return _tqdm(*args, **kwargs, mininterval=1)
 
+
 # using exponential decay rather than linear decay
 # def get_epsilon(it):
 #     return max(0.01,(-0.95/ARGS.decay_steps)*it + 1)
@@ -168,37 +169,37 @@ def main():
 
     # create new file to store durations
     i = 0
-    fd_name = results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+    fd_name = ARGS.results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
         ARGS.pmethod) + '_' + ARGS.env + "_durations0.txt"
     exists = os.path.isfile(fd_name)
     while exists:
         i += 1
-        fd_name = results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        fd_name = ARGS.results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
             ARGS.pmethod) + '_' + ARGS.env + "_durations%d.txt" % i
         exists = os.path.isfile(fd_name)
     fd = open(fd_name, "w+")
 
     # create new file to store rewards
     i = 0
-    fr_name = results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+    fr_name = ARGS.results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
         ARGS.pmethod) + '_' + ARGS.env + "_rewards0.txt"
     exists = os.path.isfile(fr_name)
     while exists:
         i += 1
-        fr_name = results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        fr_name = ARGS.results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
             ARGS.pmethod) + '_' + ARGS.env + "_rewards%d.txt" % i
         exists = os.path.isfile(fr_name)
     fr = open(fr_name, "w+")
 
     # Save experiment hyperparams
     i = 0
-    exists = os.path.isfile(results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+    exists = os.path.isfile(ARGS.results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
         ARGS.pmethod) + '_' + ARGS.env + "_info0.txt")
     while exists:
         i += 1
-        exists = os.path.isfile(results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+        exists = os.path.isfile(ARGS.results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
             ARGS.pmethod) + '_' + ARGS.env + "_info%d.txt" % i)
-    fi = open(results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+    fi = open(ARGS.results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
         ARGS.pmethod) + '_' + ARGS.env + "_info%d.txt" % i, "w+")
     file_counter = i
     fi.write(str(ARGS))
@@ -207,12 +208,12 @@ def main():
     # -----------initialization---------------
     if ARGS.replay == 'PER':
         replay = memory[ARGS.replay](ARGS.buffer, ARGS.pmethod)
-        filename = results_path + "/" + str(ARGS.buffer) + "_" + 'weights_' + str(
-            ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + "_%d.pt" % ARGS.seed_value#file_counter  # +'_.pt'
+        filename = ARGS.results_path + "/" + str(ARGS.buffer) + "_" + 'weights_' + str(
+            ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + "_%d.pt" % ARGS.seed_value  # file_counter  # +'_.pt'
     else:
         replay = memory[ARGS.replay](ARGS.buffer)
-        filename = results_path + "/" + str(ARGS.buffer) + "_" + 'weights_' + str(
-            ARGS.replay) + '_' + ARGS.env + "_%d.pt" % ARGS.seed_value#file_counter  # +'_.pt'
+        filename = ARGS.results_path + "/" + str(ARGS.buffer) + "_" + 'weights_' + str(
+            ARGS.replay) + '_' + ARGS.env + "_%d.pt" % ARGS.seed_value  # file_counter  # +'_.pt'
 
     model = network[ARGS.env]  # local network
     model_target = network[ARGS.env]  # target_network
@@ -239,8 +240,7 @@ def main():
 
         # for debugging purposes:
         if (ARGS.debug_mode):
-            print(f"buffer size: {len(replay)}, r: {episode_durations[-1] if len(episode_durations) >=1 else 0}")
-
+            print(f"buffer size: {len(replay)}, r: {episode_durations[-1] if len(episode_durations) >= 1 else 0}")
 
         render_env_bool = False
         if (ARGS.render_env > 0) and not (i_episode % ARGS.render_env):
@@ -339,10 +339,9 @@ def main():
     env.close()
 
     # TODO: save all stats in numpy (pickle)
-    b_name = results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
+    b_name = ARGS.results_path + "/" + str(ARGS.buffer) + "_" + str(ARGS.replay) + "_" + str(
         ARGS.pmethod) + '_' + ARGS.env + "_buffers_sizes_" + str(ARGS.seed_value)
     np.save(b_name, buffer_sizes)
-
 
     print(f"max episode duration {max(episode_durations)}")
     print(f"Saving weights to {filename}")
@@ -355,14 +354,14 @@ def main():
     plt.plot(smooth(episode_durations, 10))
     plt.title('Episode durations per episode')
     # plt.show()
-    plt.savefig(images_path + "/" + str(ARGS.buffer) + "_" + str(
-        ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_Episode' + "%d.png" % ARGS.seed_value)# file_counter)
+    plt.savefig(ARGS.images_path + "/" + str(ARGS.buffer) + "_" + str(
+        ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_Episode' + "%d.png" % ARGS.seed_value)  # file_counter)
 
     plt.plot(smooth(rewards_per_episode, 10))
     plt.title("Rewards per episode")
     # plt.show()
-    plt.savefig(images_path + "/" + str(ARGS.buffer) + "_" + str(
-        ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_Rewards' + "%d.png" % ARGS.seed_value) #file_counter)
+    plt.savefig(ARGS.images_path + "/" + str(ARGS.buffer) + "_" + str(
+        ARGS.replay) + '_' + ARGS.pmethod + '_' + ARGS.env + '_Rewards' + "%d.png" % ARGS.seed_value)  # file_counter)
     return episode_durations
 
 
@@ -372,10 +371,10 @@ def get_action(state, model):
 
 def evaluate():
     if ARGS.replay == 'PER':
-        filename = results_path + "/" + 'weights_' + str(ARGS.replay) + \
-            '_' + ARGS.pmethod + '_' + ARGS.env + '_.pt'
+        filename = ARGS.results_path + "/" + 'weights_' + str(ARGS.replay) + \
+                   '_' + ARGS.pmethod + '_' + ARGS.env + '_.pt'
     else:
-        filename = results_path + "/" + 'weights_' + str(ARGS.replay) + '_' + ARGS.env + '_.pt'
+        filename = ARGS.results_path + "/" + 'weights_' + str(ARGS.replay) + '_' + ARGS.env + '_.pt'
 
     env, (input_size, output_size) = get_env(ARGS.env)
     # set env seed
@@ -417,9 +416,191 @@ def evaluate():
     # plt.savefig('foo.png')
 
 
+class ParameterProperties():
+    def __init__(self, d_type, value, meta_p, dist_type=None):
+        self.d_type = d_type
+        self.value = value
+        self.meta_p = np.array(meta_p)
+        self.dist_type = dist_type
+
+        if self.dist_type is None:
+            dists = {int: "uniform", float: "normal"}
+
+            if self.d_type is int:
+                self.dist_type = "uniform"
+            elif self.d_type is float:
+                self.dist_type = "normal"
+
+    def mutate(self, m_p=.1):
+        """mutate the parameter"""
+        if np.random.uniform() < m_p:
+
+            if self.dist_type == "uniform":
+
+                #first mutate the meta parameters
+                self.meta_p += self.value
+                self.meta_p /= 2
+
+                self.value = np.random.uniform(low=self.meta_p[0],
+                                               high=self.meta_p[1])
+
+            elif self.dist_type == "normal":
+
+                self.meta_p[0] = (self.meta_p[0] + self.value) / 2
+                self.meta_p[1] += np.random.randn() * (self.meta_p[1] / 10)
+
+                self.value = self.meta_p[0] + self.meta_p[1] * np.random.randn()
+
+        if self.d_type is int:
+            self.value = int(self.value)
+
+    def crossover(self, lover):
+        a = np.random.uniform()
+        self.meta_p = a * lover.meta_p + (1 - a) * self.meta_p
+
+        if self.dist_type == "uniform":
+            self.value = np.random.uniform(low=self.meta_p[0],
+                                           high=self.meta_p[1])
+
+        elif self.dist_type == "normal":
+            self.value = self.meta_p[0] + self.meta_p[1] * np.random.randn()
+
+        if self.d_type is int:
+            self.value = int(self.value)
+
+    def initialize(self, m_p=.5):
+        if np.random.uniform() < m_p:
+            a = np.random.uniform()
+            if self.dist_type == "uniform":
+                if a < .3:
+                    self.value = self.meta_p[0]
+                elif a < .6:
+                    self.value = self.meta_p[1]
+                elif a < .9:
+                    self.value = np.random.uniform(low=self.meta_p[0],
+                                               high=self.meta_p[1])
+
+            elif self.dist_type == "normal":
+                self.value = self.meta_p[0] + self.meta_p[1] * np.random.randn()
+                if self.value < self.meta_p[0]:
+                    self.value /= 2
+                else:
+                    self.value *= 1.5
+
+        if self.d_type is int:
+            self.value = int(self.value)
+
+
+def evolve_my_rl():
+
+    player = []
+    scale_reward = -1 if ARGS.minimize else 1
+
+    for i in range(5):
+
+        parameters = {"num_episodes": ParameterProperties(d_type=int,
+                                                          value=ARGS.num_episodes,
+                                                          meta_p=[10, 10_000]),
+                      "lr": ParameterProperties(d_type=float,
+                                                value=ARGS.lr,
+                                                meta_p=[ARGS.lr, 1e-1]),
+                      "discount_factor": ParameterProperties(d_type=float,
+                                                             value=ARGS.discount_factor,
+                                                             meta_p=[0.01, 1],
+                                                             dist_type="uniform"),
+                      "buffer": ParameterProperties(d_type=int,
+                                                    value=ARGS.buffer,
+                                                    meta_p=[10, 100_000]),
+                      "TAU": ParameterProperties(d_type=float,
+                                                 value=ARGS.TAU,
+                                                 meta_p=[ARGS.TAU, 1]),
+                      "buffer_step_size": ParameterProperties(d_type=int,
+                                                              value=ARGS.buffer_step_size,
+                                                              meta_p=[1, 100])
+                      }
+        for p in parameters.keys():
+            parameters[p].initialize()
+
+        reward = 0
+        king = False
+        player.append([parameters, reward])
+
+    early_stop = False
+    king_idx = 0
+    max_trials =100
+    for i in range(max_trials):
+        ind = i % len(player)
+
+        # there is a more elegant way of doing it!
+        ARGS.num_episodes = player[ind][0]["num_episodes"].value
+        ARGS.lr = player[ind][0]["lr"].value
+        ARGS.discount_factor = player[ind][0]["discount_factor"].value
+        ARGS.buffer = player[ind][0]["buffer"].value
+        ARGS.TAU = player[ind][0]["TAU"].value
+        ARGS.buffer_step_size = player[ind][0]["buffer_step_size"].value
+        print(ARGS)
+
+        episode_durations = main()
+        print(player[ind][1])
+        player[ind][1] = scale_reward * np.mean(episode_durations)
+        print(player[ind][1])
+
+        if player[ind][1] > player[king_idx][1]:
+            king_idx = ind
+
+        else:
+            for p in player[ind][0].keys():
+                lover = np.random.randint(len(player))
+                player[ind][0][p].crossover(player[lover][0][p])
+                if np.random.uniform() < (i / (2 * max_trials)):
+                    player[ind][0][p].crossover(player[king_idx][0][p])
+                player[ind][0][p].mutate()
+
+    ARGS.num_episodes = player[king_idx][0]["num_episodes"].value
+    ARGS.lr = player[king_idx][0]["lr"].value
+    ARGS.discount_factor = player[king_idx][0]["discount_factor"].value
+    ARGS.buffer = player[king_idx][0]["buffer"].value
+    ARGS.TAU = player[king_idx][0]["TAU"].value
+    ARGS.buffer_step_size = player[king_idx][0]["buffer_step_size"].value
+
+def create_folders():
+    parent_path = "ER_results"
+    if ARGS.evolve:
+        parent_path += "_evolving"
+
+    if not os.path.exists(parent_path):
+        os.mkdir(parent_path)
+
+    env_path = parent_path + "/" + str(ARGS.env)
+    if not os.path.exists(env_path):
+        os.mkdir(env_path)
+
+    replay_path = env_path + "/" + str(ARGS.replay)
+    if ARGS.adaptive_buffer:
+        replay_path = replay_path + '-' + 'adapt'
+
+    if ARGS.replay == 'PER':
+        replay_path = replay_path + '-' + str(ARGS.pmethod)
+    if not os.path.exists(replay_path):
+        os.mkdir(replay_path)
+
+    images_path = replay_path + "/" + "images"
+    if not os.path.exists(images_path):
+        os.mkdir(images_path)
+
+    results_path = replay_path + "/" + "results"
+    if not os.path.exists(results_path):
+        os.mkdir(results_path)
+
+    ARGS.env_path = env_path
+    ARGS.replay_path = replay_path
+    ARGS.images_path = images_path
+    ARGS.results_path = results_path
+
+    print(results_path)
+
+
 if __name__ == "__main__":
-
-
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_episodes', default=1000, type=int,
@@ -463,6 +644,11 @@ if __name__ == "__main__":
                         help='activate adapitive buffer')
     parser.add_argument('--buffer_step_size', default=20, type=float)
 
+    parser.add_argument('--evolve', action='store_true',
+                        help='activate hyper-parameter search')
+    parser.add_argument('--minimize', action='store_true',
+                        help='if we want to minimize the reward instead of maximizing it')
+
     ARGS = parser.parse_args()
 
     # -------setup seed-----------
@@ -473,32 +659,21 @@ if __name__ == "__main__":
 
     print(ARGS)
 
-    parent_path = "ER_results"
-    if not os.path.exists(parent_path):
-        os.mkdir(parent_path)
+    create_folders()
 
-    env_path = parent_path + "/" + str(ARGS.env)
-    if not os.path.exists(env_path):
-        os.mkdir(env_path)
+    if ARGS.evolve:
+        # hyper parameter search
+        evolve_my_rl()
 
-    replay_path = env_path + "/" + str(ARGS.replay)
-    if ARGS.adaptive_buffer:
-        replay_path = replay_path + '-' + 'adapt'
-    if ARGS.replay == 'PER':
-        replay_path = replay_path + '-' + str(ARGS.pmethod)
-    if not os.path.exists(replay_path):
-        os.mkdir(replay_path)
+        # run it for 10 random seeds:
+        for i in range(10):
+            ARGS.seed_value = i
 
-    images_path = replay_path + "/" + "images"
-    if not os.path.exists(images_path):
-        os.mkdir(images_path)
+            create_folders()
+            main()
 
-    results_path = replay_path + "/" + "results"
-    if not os.path.exists(results_path):
-        os.mkdir(results_path)
-
-    print(results_path)
-    main()
+    else:
+        main()
     # evaluate()
 
 # python train.py --num_episodes 1000 --batch_size 64 --render_env 10 --num_hidden 64 --lr 5e-4 --discount_factor 0.8 --replay NaiveReplayMemory --env CartPole-v1 --buffer 10000 --pmethod prop --TAU 0.1
