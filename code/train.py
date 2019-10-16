@@ -503,7 +503,8 @@ def evolve_my_rl():
                                                           meta_p=[10, 10_000]),
                       "lr": ParameterProperties(d_type=float,
                                                 value=ARGS.lr,
-                                                meta_p=[ARGS.lr, 1e-1]),
+                                                meta_p=[1e-6, 1e-1],
+                                                dist_type="uniform"),
                       "discount_factor": ParameterProperties(d_type=float,
                                                              value=ARGS.discount_factor,
                                                              meta_p=[0.01, 1],
@@ -555,6 +556,9 @@ def evolve_my_rl():
                 if np.random.uniform() < (i / (2 * max_trials)):
                     player[ind][0][p].crossover(player[king_idx][0][p])
                 player[ind][0][p].mutate()
+
+            # We want shorter episodes!
+            player[ind][0]["num_episodes"].value = player[ind][0]["num_episodes"].value // 2 + 1
 
     ARGS.num_episodes = player[king_idx][0]["num_episodes"].value
     ARGS.lr = player[king_idx][0]["lr"].value
