@@ -41,7 +41,7 @@ hyperparameters were chosen based on referenced papers
 | Parameter  | Value |
 | ------------- | ------------- |
 | Fixed Buffer size (number of frames)  | $10^4$ |
-| $\alpha$ (priority) | 0.6 |
+| ```$\alpha$``` (priority) | 0.6 |
 | $\beta$ (IS) | 0.4 \rightarrow 1  |
 
 
