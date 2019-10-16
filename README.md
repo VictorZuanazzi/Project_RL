@@ -48,6 +48,8 @@ hyperparameters were chosen based on referenced papers
 | ![img](http://latex.codecogs.com/svg.latex?%5Calpha%0D%0A) (Priority) [[2](https://arxiv.org/pdf/1511.05952.pdf)]  | 0.6 |
 | ![img](http://latex.codecogs.com/svg.latex?%5Cbeta)  (IS) [[2](https://arxiv.org/pdf/1511.05952.pdf)]  | 0.4 -> 1 |
 | ![img](https://latex.codecogs.com/gif.latex?%5Cgamma)  (Discount Factor)  | <ul><li>0.8 for Catpole</li><li>0.9 for MountainCar and LunarLander</li></ul> |
+| ![img](https://latex.codecogs.com/gif.latex?%5Ctau)  (Softupdate interpolation parameter)  | <ul><li>0.001 for Catpole</li><li>0.1 for MountainCar and LunarLander</li></ul> |
+
 
 
 
