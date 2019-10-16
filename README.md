@@ -38,11 +38,12 @@ We mainly experimented with three experience replays techniques which are:
 ## Hyperparameters
 hyperparameters were chosen based on referenced papers 
 
+
 | Parameter  | Value |
 | ------------- | ------------- |
-| Fixed Buffer size (number of frames)  | $10^4$ |
-| <img src="https://latex.codecogs.com/gif.latex? \alpha " /> (priority) | 0.6 |
-| <img src="https://latex.codecogs.com/gif.latex? \beta " /> (IS) | <img src="https://latex.codecogs.com/gif.latex? 0.4 \rightarrow 1 " />  |
+| Fixed Buffer size (number of frames)  | 10^4 |
+|  ![img](http://latex.codecogs.com/svg.latex?%5Calpha%0D%0A) (priority) | 0.6 |
+|  ![img](http://latex.codecogs.com/svg.latex?%5Cbeta)  (IS) | 0.4 -> 1 |
 
 
 
