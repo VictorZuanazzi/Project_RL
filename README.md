@@ -23,7 +23,6 @@ There are different types of experience replay, e.g. prioritized experience repl
 ## Experience Replays
 We mainly experimented with three experience replays techniques which are:
 ```
-- Without Experience Replay (TODO) 
 - Naive Experience Replay 
 - Prioritized Experience Replay
     + rank base
@@ -35,12 +34,17 @@ We mainly experimented with three experience replays techniques which are:
   + Adaptive rank PER
 
 ```
-# TODOs
-```
-1) add without memory exps as baseline
-2) experiment on effect of various BATCH SIZEs on each method
-3) experiment on effect of various BUFFER SIZEs on each method
-```
+
+## Hyperparameters
+hyperparameters were chosen based on referenced papers 
+
+| Parameter  | Value |
+| ------------- | ------------- |
+| Fixed Buffer size (number of frames)  | $10^4$ |
+| $\alpha$ (priority) | 0.6 |
+| $\beta$ (IS) | 0.4 \rightarrow 1  |
+
+
 
 * [Code](code/)
 * [Poster presentation](Poster.pdf)
