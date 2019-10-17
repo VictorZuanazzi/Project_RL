@@ -233,8 +233,8 @@ if __name__ == "__main__":
                              'for available stats will be rendered')
 
     parser.add_argument('--separate', default='0', type=int, help='generate plots separately or not.'
-                                                                  'separate==1 if you need to plot non adaptive '
-                                                                  'method, separate==2 to plot adaptive ones and '
+                                                                  'separate==1 if you need to plot adaptive '
+                                                                  'method, separate==2 to plot non-adaptive ones and '
                                                                   'separate==0 if you need to plot all together.')
     parser.add_argument('--abrv_path', action='store_true',
                         help='To state that result folder names are already written in abbreviation')
