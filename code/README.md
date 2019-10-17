@@ -52,21 +52,27 @@ please upload the results in the root path with this hierarchy:
 cd code
 
 # ------------------- If folder names are not summarized -------------------
-python --generate_stats       # Generating the mean and std stats
-python --separate 0           # To plot all methods together
-python --separate 1           # To plot just adaptive methods
-python --separate 2           # To plot just non-adaptive methods
+python plot.py --generate_stats       # Generating the mean and std stats
+python plot.py --separate 0           # To plot all methods together
+python plot.py --separate 1           # To plot just adaptive methods
+python plot.py --separate 2           # To plot just non-adaptive methods
 
 
 # ----------- If folder names are abbreviations (NER, CER, ...) ------------
-python --generate_stats --abrv_path # Generating the mean and std stats
-python --separate 0 --abrv_path     # To plot all methods together
-python --separate 1 --abrv_path     # To plot just adaptive methods
-python --separate 2 --abrv_path     # To plot just non-adaptive methods
+python plot.py --generate_stats --abrv_path # Generating the mean and std stats
+python plot.py --separate 0 --abrv_path     # To plot all methods together
+python plot.py --separate 1 --abrv_path     # To plot just adaptive methods
+python plot.py --separate 2 --abrv_path     # To plot just non-adaptive methods
 
 
 ```
 
+#### Plotting buffer size change along training for adaptive techniques:
+
+```
+cd code
+python Plot_buffersize.py
+```
 
 
 
