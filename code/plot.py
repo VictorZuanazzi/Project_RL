@@ -192,7 +192,7 @@ def main():
         abrv_methods = {"CombinedReplayMemory": "CER", "NaiveReplayMemory": "NER", "PER-rank": "PER-rank",
                         "PER-prop": "PER-prop",
                         "CombinedReplayMemory-adapt": "ACER", "NaiveReplayMemory-adapt": "ANER",
-                        "PER-adapt-rank": "APER"}
+                        "PER-adapt-rank": "APER-rank"}
         all_methods = ["NaiveReplayMemory", "CombinedReplayMemory", "PER-rank", "PER-prop",
                        "NaiveReplayMemory-adapt", "CombinedReplayMemory-adapt", "PER-adapt-rank"]
 
