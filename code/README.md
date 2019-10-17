@@ -50,8 +50,24 @@ please upload the results in the root path with this hierarchy:
 
 ```
 cd code
-# generating the mean and std stats:
-python plot.py 
-# generating plots:
-python plot.py --common
+
+# ------------------- If folder names are not summarized -------------------
+# python --generate_stats       # Generating the mean and std stats
+# python --separate 0           # To plot all methods together
+# python --separate 1           # To plot just non-adaptive methods
+# python --separate 2           # To plot just adaptive methods
+
+
+# ----------- If folder names are abbreviations (NER, CER, ...) ------------
+# python --generate_stats --abrv_path # Generating the mean and std stats
+# python --separate 0 --abrv_path     # To plot all methods together
+# python --separate 1 --abrv_path     # To plot just non-adaptive methods
+# python --separate 2 --abrv_path     # To plot just adaptive methods
+
+
 ```
+
+
+
+
+
