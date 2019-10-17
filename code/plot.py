@@ -186,7 +186,7 @@ def main():
 
     if ARGS.abrv_path == True:
         abrv_methods = {"CER": "CER", "NER": "NER", "PER-rank": "PER-rank", "PER-prop": "PER-prop",
-                        "ACER": "ACER", "ANER": "ANER", "APER-rank": "APER"}
+                        "ACER": "ACER", "ANER": "ANER", "APER-rank": "APER-rank"}
         all_methods = ["NER", "CER", "PER-rank", "PER-prop", "ANER", "ACER", "APER-rank"]
     else:
         abrv_methods = {"CombinedReplayMemory": "CER", "NaiveReplayMemory": "NER", "PER-rank": "PER-rank",
