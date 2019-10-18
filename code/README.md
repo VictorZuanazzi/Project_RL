@@ -23,6 +23,24 @@ python code/train.py --num_episodes 1000 --batch_size 64 --num_hidden 64 --lr 5e
 
 ```
 
+## Hyperparameters
+hyperparameters were chosen based on referenced papers 
+
+
+| Parameter  | Value |
+| ------------- | ------------- |
+| Fixed Buffer size (Number of frames) [[1](https://arxiv.org/pdf/1712.01275.pdf)]  | 10^4 |
+| Batch Size  | 64 |
+| Learning rate [[1](https://arxiv.org/pdf/1712.01275.pdf)] | 5e-4 |
+| max_step (Maximum episode duration) [[1](https://arxiv.org/pdf/1712.01275.pdf)]  | 1000 |
+| ![img](http://latex.codecogs.com/svg.latex?%5Calpha%0D%0A) (Priority) [[2](https://arxiv.org/pdf/1511.05952.pdf)]  | 0.6 |
+| ![img](http://latex.codecogs.com/svg.latex?%5Cbeta)  (IS) [[2](https://arxiv.org/pdf/1511.05952.pdf)]  | 0.4 -> 1 |
+| ![img](https://latex.codecogs.com/gif.latex?%5Cgamma)  (Discount Factor)  | <ul><li>0.8 for Catpole</li><li>0.99 for MountainCar and LunarLander</li></ul> |
+| ![img](https://latex.codecogs.com/gif.latex?%5Ctau)  (Softupdate interpolation parameter)  | <ul><li>0.001 for Catpole</li><li>0.1 for MountainCar and LunarLander</li></ul> |
+
+
+
+
 
 ## plotting:
 ```
